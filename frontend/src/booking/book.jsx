@@ -11,7 +11,6 @@ const BookingPage = () => {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
     const [formErrors, setFormErrors] = useState({});
-    const [currentStep, setCurrentStep] = useState(1);
     const [progress, setProgress] = useState(25);
 
     // Get backend URL from environment
@@ -61,6 +60,7 @@ const BookingPage = () => {
             let isAuth = false;
             let userData = null;
 
+            // ✅ Check if user is authenticated
             if (token) {
                 try {
                     const response = await fetch(`${API_URL}/api/auth/status`, {
@@ -87,7 +87,10 @@ const BookingPage = () => {
                 }
             }
 
+            // ✅ Check if user came from guest booking
             const isGuest = window.location.pathname.includes('booking-guest');
+
+            // ✅ Check if room data was passed from landing page
             const state = location.state;
 
             if (state) {
@@ -110,13 +113,17 @@ const BookingPage = () => {
                 }
             }
 
+            // ✅ Handle guest booking - allow access
             if (isGuest) {
                 setIsAuthenticated(false);
                 setAuthChecked(true);
                 return;
             }
 
+            // ✅ If authenticated or guest, allow access
+            // ✅ Only redirect to home if NOT authenticated AND NOT guest
             if (!isAuth && !isGuest) {
+                // Don't redirect immediately, show a message or redirect to home
                 navigate('/');
                 return;
             }
@@ -250,6 +257,8 @@ const BookingPage = () => {
                 userId: user?._id || null
             };
 
+            console.log('📤 Sending booking data:', bookingData);
+
             const response = await fetch(`${API_URL}/api/bookings/create`, {
                 method: 'POST',
                 headers: headers,
@@ -298,6 +307,7 @@ const BookingPage = () => {
         );
     }
 
+    // ✅ Only return null if not authenticated AND not guest
     if (!isAuthenticated && !window.location.pathname.includes('booking-guest')) {
         return null;
     }
