@@ -582,7 +582,7 @@ const HotelLanding = () => {
                             <h3>Visit Us</h3>
                             <p>📍 7W4F+C26, Savhat, Uttar Pradesh 221011</p>
                             <p>📞 +91 9335424144</p>
-                            <p>✉️ raghavhotel112@gmail.com</p>
+                            <p>✉️ raghavhotel7@gmail.com</p>
                             <div className="social-links">
                                 <a href="#" className="social-link">📱</a>
                                 <a href="#" className="social-link">📘</a>
