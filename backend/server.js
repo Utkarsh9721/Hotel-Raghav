@@ -10,6 +10,25 @@ import bookingRoutes from './controllers/routes/bookingRoutes.js';
 import adminRoutes from './controllers/routes/adminRoute.js';
 import config from './controllers/config/config.js';
 import contactRoutes from './controllers/routes/contactRoutes.js';
+// Install mongodb-session
+// npm install connect-mongodb-session
+
+import MongoStore from 'connect-mongodb-session';
+const MongoDBStore = MongoStore(session);
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: new MongoDBStore({
+        uri: process.env.MONGO_URI,
+        collection: 'sessions'
+    }),
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
 
 dotenv.config();
 const app = express();
