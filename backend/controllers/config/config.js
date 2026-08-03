@@ -25,13 +25,11 @@ const config = {
     // Session
     sessionSecret: process.env.SESSION_SECRET,
 
-    // ✅ FIXED: Frontend URLs based on environment
+    // ✅ Frontend URLs based on environment
     get frontendUrl() {
-        // If we're in production, use PROD URL
         if (isProduction) {
             return process.env.FRONTEND_URL_PROD || process.env.FRONTEND_URL || 'https://raghav-hotel-frontend.vercel.app';
         }
-        // Otherwise use DEV URL
         return process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
     },
 
@@ -42,7 +40,7 @@ const config = {
         return process.env.ADMIN_URL_DEV || 'http://localhost:5173/admin';
     },
 
-    // ✅ FIXED: Google OAuth based on environment
+    // ✅ Google OAuth based on environment
     get googleClientId() {
         if (isProduction) {
             return process.env.GOOGLE_CLIENT_ID_PROD || process.env.GOOGLE_CLIENT_ID;
@@ -65,21 +63,31 @@ const config = {
         return process.env.GOOGLE_CALLBACK_URL_DEV || 'http://localhost:5000/api/auth/google/callback';
     },
 
-    // ✅ FIXED: CORS allowed origins
-    // controllers/config/config.js
+    // ✅ FIXED: CORS allowed origins - Allow all Vercel URLs
     get corsOrigins() {
         const origins = [
             'http://localhost:5173',
             'http://localhost:3000',
             'http://localhost:5000',
             'https://hotel-raghav-frontend.vercel.app',
-            'https://hotel-raghav-rltl-rouge.vercel.app',  // ✅ Your correct URL
-            process.env.FRONTEND_URL_PROD,
-            process.env.FRONTEND_URL
+            'https://hotel-raghav-rltl-rouge.vercel.app',
+            // ✅ Add any URL that contains vercel.app
+            ...(process.env.FRONTEND_URL_PROD ? [process.env.FRONTEND_URL_PROD] : []),
+            ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
         ].filter(Boolean);
 
         return origins;
     },
+
+    // ✅ NEW: Check if origin is allowed (with Vercel wildcard support)
+    isOriginAllowed(origin) {
+        // Allow all Vercel URLs
+        if (origin && origin.includes('vercel.app')) {
+            return true;
+        }
+        return this.corsOrigins.includes(origin) || this.isDevelopment;
+    },
+
     // Email
     email: {
         host: process.env.SMTP_HOST,
@@ -89,11 +97,6 @@ const config = {
         pass: process.env.SMTP_PASS,
         adminEmail: process.env.ADMIN_EMAIL,
         adminPhone: process.env.ADMIN_PHONE
-    },
-
-    // ✅ Added: Check if origin is allowed
-    isOriginAllowed(origin) {
-        return this.corsOrigins.includes(origin) || this.isDevelopment;
     }
 };
 
