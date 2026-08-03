@@ -138,7 +138,6 @@ const AdminLogin = () => {
                 <div className="admin-login-footer">
                     <a href="/">← Back to Home</a>
                     <span>|</span>
-                    <a href="/admin/forgot-password">Forgot Password?</a>
                 </div>
 
                 <div className="admin-login-security">
