@@ -1,4 +1,4 @@
-// server.js - Complete CORS fix with wildcard
+// server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -18,38 +18,32 @@ const app = express();
 console.log('🚀 Starting Raghav Hotel Backend...');
 console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 
-// ✅ FIXED: CORS with wildcard for all Vercel URLs
+// ✅ OPTION 1: Simple CORS (Allow All - For Testing)
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) {
-            return callback(null, true);
-        }
-
-        // ✅ ALLOW ALL VERCEL URLs - This is the key fix!
-        if (origin.includes('vercel.app')) {
-            console.log('✅ CORS allowed for Vercel URL:', origin);
-            return callback(null, true);
-        }
-
-        // Allow localhost for development
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'http://localhost:5000'
-        ];
-
-        if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
-            callback(null, true);
-        } else {
-            console.warn('⚠️ CORS blocked:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
+
+// ✅ OPTION 2: Manual CORS Headers (More Control)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+
+    // Allow all origins for testing
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        console.log('🔄 Preflight request received from:', origin);
+        return res.sendStatus(200);
+    }
+
+    next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -76,6 +70,16 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
 
+// ✅ Test CORS endpoint
+app.get('/api/cors-test', (req, res) => {
+    res.json({
+        message: 'CORS is working!',
+        origin: req.headers.origin || 'No origin',
+        method: req.method,
+        headers: req.headers
+    });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -84,15 +88,6 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
         frontendUrl: process.env.FRONTEND_URL || config.frontendUrl
-    });
-});
-
-// ✅ Debug CORS route
-app.get('/api/cors-test', (req, res) => {
-    res.json({
-        message: 'CORS is working!',
-        origin: req.headers.origin || 'No origin',
-        allowed: req.headers.origin ? req.headers.origin.includes('vercel.app') : false
     });
 });
 
@@ -126,7 +121,7 @@ const startServer = async () => {
             console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || config.frontendUrl || 'Not set'}`);
             console.log(`🔑 Google Auth: ${config.googleClientId ? '✅ Configured' : '❌ Not configured'}`);
             console.log(`📧 Admin Email: ${process.env.ADMIN_EMAIL || config.email?.adminEmail || 'Not set'}`);
-            console.log(`🔒 CORS: Allowing all .vercel.app domains`);
+            console.log(`🔒 CORS: All origins allowed (testing mode)`);
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error.message);
