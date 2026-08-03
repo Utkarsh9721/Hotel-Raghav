@@ -782,3 +782,277 @@ body {
         width: 100%;
     }
 }
+
+/* Add to book.css */
+
+/* Progress Bar */
+.progress-container {
+    max-width: 800px;
+    margin: -20px auto 30px;
+    padding: 20px 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c0392b, #e74c3c);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #adb5bd;
+}
+
+.progress-steps span {
+    transition: color 0.3s ease;
+}
+
+.progress-steps span.active {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+/* Loading Spinner in Button */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Enhanced Form Styles */
+.booking-form-container h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .progress-container {
+        padding: 15px 20px;
+        margin: -10px auto 20px;
+    }
+
+    .progress-steps {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-steps {
+        font-size: 8px;
+    }
+
+    .progress-steps span {
+        padding: 0 2px;
+    }
+}
+
+/* Room Type Badges */
+.room-card .room-type-badge {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.room-type-badge.standard {
+    background: #e8f4fd;
+    color: #2980b9;
+}
+
+.room-type-badge.deluxe {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.room-type-badge.suite {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Success Message Enhanced */
+.success-message {
+    position: relative;
+    overflow: hidden;
+}
+
+.success-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+/* Floating Labels */
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+/* Error States */
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8 !important;
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+    font-weight: 500;
+}
+
+/* Success Message Animation */
+.success-message {
+    animation: slideDown 0.5s ease, pulse 2s ease 1s;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.01);
+    }
+}
+
+/* Guest Notice */
+.guest-notice {
+    background: linear-gradient(135deg, #fff3cd, #fff8e1);
+    border-left: 4px solid #f39c12;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.guest-notice p {
+    margin: 0;
+    flex: 1;
+}
+
+.btn-create-account {
+    background: #f39c12;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-create-account:hover {
+    background: #e67e22;
+    transform: scale(1.05);
+}
+
+/* Summary Card Hover Effect */
+.booking-summary {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.booking-summary:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Summary Item Icons */
+.summary-item .summary-label::before {
+    margin-right: 6px;
+}
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+    .guest-notice {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .btn-create-account {
+        width: 100%;
+    }
+}

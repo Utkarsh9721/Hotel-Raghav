@@ -11,6 +11,8 @@ const BookingPage = () => {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const [currentStep, setCurrentStep] = useState(1);
+    const [progress, setProgress] = useState(25);
 
     // Get backend URL from environment
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -28,11 +30,17 @@ const BookingPage = () => {
         specialRequests: ''
     });
 
-    // Room prices
+    // Room prices (INR)
     const roomPrices = {
-        standard: 120,
-        deluxe: 200,
-        suite: 350
+        standard: 800,
+        deluxe: 1000,
+        suite: 1500
+    };
+
+    const roomLabels = {
+        standard: 'Non AC Room',
+        deluxe: 'Deluxe Room',
+        suite: 'Executive Suite'
     };
 
     // Booking summary
@@ -67,7 +75,6 @@ const BookingPage = () => {
                         userData = data.user;
                         setIsAuthenticated(true);
                         setUser(data.user);
-                        // Pre-fill form with user data
                         setFormData(prev => ({
                             ...prev,
                             firstName: data.user.firstName || '',
@@ -80,11 +87,9 @@ const BookingPage = () => {
                 }
             }
 
-            // Check if user came from guest booking
             const isGuest = window.location.pathname.includes('booking-guest');
-
-            // Check if room data was passed from landing page
             const state = location.state;
+
             if (state) {
                 if (state.roomType) {
                     setFormData(prev => ({ ...prev, roomType: state.roomType }));
@@ -99,21 +104,18 @@ const BookingPage = () => {
                         email: state.user.email || ''
                     }));
                 }
-                // Check for booking success from redirect
                 if (state.bookingSuccess) {
                     setBookingSuccess(true);
                     setBookingReference(state.reference || 'N/A');
                 }
             }
 
-            // Handle guest booking
             if (isGuest) {
                 setIsAuthenticated(false);
                 setAuthChecked(true);
                 return;
             }
 
-            // Redirect if not authenticated and not guest
             if (!isAuth && !isGuest) {
                 navigate('/');
                 return;
@@ -129,6 +131,17 @@ const BookingPage = () => {
     useEffect(() => {
         calculateTotal();
     }, [formData.checkIn, formData.checkOut, formData.roomType, formData.guests]);
+
+    // Update progress
+    useEffect(() => {
+        let prog = 0;
+        if (formData.roomType) prog += 20;
+        if (formData.checkIn && formData.checkOut) prog += 25;
+        if (formData.firstName && formData.lastName) prog += 20;
+        if (formData.email && formData.phone) prog += 20;
+        if (formData.specialRequests) prog += 15;
+        setProgress(Math.min(prog, 100));
+    }, [formData]);
 
     const calculateTotal = () => {
         if (formData.checkIn && formData.checkOut) {
@@ -155,13 +168,11 @@ const BookingPage = () => {
             ...prev,
             [name]: value
         }));
-        // Clear error for this field when user types
         if (formErrors[name]) {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
 
-    // ✅ Validate form before submission
     const validateForm = () => {
         const errors = {};
 
@@ -202,9 +213,7 @@ const BookingPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // ✅ Validate form
         if (!validateForm()) {
-            // Scroll to first error
             const firstErrorField = Object.keys(formErrors)[0];
             if (firstErrorField) {
                 const element = document.getElementById(firstErrorField);
@@ -220,14 +229,11 @@ const BookingPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const headers = {
-                'Content-Type': 'application/json'
-            };
+            const headers = { 'Content-Type': 'application/json' };
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            // Prepare booking data
             const bookingData = {
                 roomType: formData.roomType,
                 guests: parseInt(formData.guests),
@@ -244,8 +250,6 @@ const BookingPage = () => {
                 userId: user?._id || null
             };
 
-            console.log('📤 Sending booking data:', bookingData);
-
             const response = await fetch(`${API_URL}/api/bookings/create`, {
                 method: 'POST',
                 headers: headers,
@@ -257,11 +261,8 @@ const BookingPage = () => {
             if (data.success) {
                 setBookingSuccess(true);
                 setBookingReference(data.booking?.bookingReference || 'N/A');
-
-                // Scroll to top to show success message
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                // Reset form after success
                 setTimeout(() => {
                     setBookingSuccess(false);
                     navigate('/', {
@@ -284,12 +285,7 @@ const BookingPage = () => {
     };
 
     const getRoomTypeLabel = (type) => {
-        const labels = {
-            standard: 'Standard Room',
-            deluxe: 'Deluxe Room',
-            suite: 'Executive Suite'
-        };
-        return labels[type] || type;
+        return roomLabels[type] || type;
     };
 
     // Show loading state while checking auth
@@ -302,7 +298,6 @@ const BookingPage = () => {
         );
     }
 
-    // If not authenticated and not guest booking, return null (will redirect via useEffect)
     if (!isAuthenticated && !window.location.pathname.includes('booking-guest')) {
         return null;
     }
@@ -313,7 +308,7 @@ const BookingPage = () => {
             <nav className="booking-nav">
                 <div className="nav-container">
                     <div className="nav-logo" onClick={() => navigate('/')}>
-                        <span className="logo-text">Raghav Hotel</span>
+                        <span className="logo-text">🏨 Hotel RAGHAV</span>
                         <span className="logo-stars">★★★★★</span>
                     </div>
                     <div className="nav-links">
@@ -335,9 +330,22 @@ const BookingPage = () => {
             <section className="booking-hero">
                 <div className="booking-hero-content">
                     <h1>📅 Book Your Stay</h1>
-                    <p>Experience luxury and comfort at Raghav Hotel</p>
+                    <p>Experience luxury and comfort at Hotel RAGHAV</p>
                 </div>
             </section>
+
+            {/* Progress Bar */}
+            <div className="progress-container">
+                <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                </div>
+                <div className="progress-steps">
+                    <span className={progress >= 20 ? 'active' : ''}>Room</span>
+                    <span className={progress >= 45 ? 'active' : ''}>Dates</span>
+                    <span className={progress >= 65 ? 'active' : ''}>Details</span>
+                    <span className={progress >= 85 ? 'active' : ''}>Review</span>
+                </div>
+            </div>
 
             {/* Booking Form */}
             <section className="booking-form-section">
@@ -351,7 +359,7 @@ const BookingPage = () => {
                                     <span className="success-icon">✅</span>
                                     <h3>Booking Request Sent!</h3>
                                     <p>Your booking reference: <strong>{bookingReference}</strong></p>
-                                    <p>Thank you for choosing Raghav Hotel. Our team will contact you shortly to confirm your booking.</p>
+                                    <p>Thank you for choosing Hotel RAGHAV. Our team will contact you shortly.</p>
                                     <div className="success-actions">
                                         <button onClick={() => navigate('/')} className="btn-home">
                                             Return Home
@@ -364,7 +372,7 @@ const BookingPage = () => {
                                 <form onSubmit={handleSubmit} className="booking-form" noValidate>
                                     {/* Room Selection */}
                                     <div className="form-section">
-                                        <h3>Room Selection</h3>
+                                        <h3>🏠 Room Selection</h3>
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label htmlFor="roomType">Room Type</label>
@@ -375,9 +383,9 @@ const BookingPage = () => {
                                                     onChange={handleChange}
                                                     required
                                                 >
-                                                    <option value="standard">Standard Room - $120/night</option>
-                                                    <option value="deluxe">Deluxe Room - $200/night</option>
-                                                    <option value="suite">Executive Suite - $350/night</option>
+                                                    <option value="standard">Non AC Room - ₹800/night</option>
+                                                    <option value="deluxe">Deluxe Room - ₹1000/night</option>
+                                                    <option value="suite">Executive Suite - ₹1500/night</option>
                                                 </select>
                                             </div>
                                             <div className="form-group">
@@ -400,7 +408,7 @@ const BookingPage = () => {
 
                                     {/* Date Selection */}
                                     <div className="form-section">
-                                        <h3>Select Dates</h3>
+                                        <h3>📅 Select Dates</h3>
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label htmlFor="checkIn">Check-in Date</label>
@@ -439,7 +447,7 @@ const BookingPage = () => {
 
                                     {/* Personal Information */}
                                     <div className="form-section">
-                                        <h3>Personal Information</h3>
+                                        <h3>👤 Personal Information</h3>
                                         {!isAuthenticated && (
                                             <div className="guest-notice">
                                                 <p>🔓 You're booking as a guest. Create an account for faster future bookings!</p>
@@ -459,7 +467,7 @@ const BookingPage = () => {
                                                     type="text"
                                                     id="firstName"
                                                     name="firstName"
-                                                    placeholder="John"
+                                                    placeholder="Abhijeet"
                                                     value={formData.firstName}
                                                     onChange={handleChange}
                                                     required
@@ -476,7 +484,7 @@ const BookingPage = () => {
                                                     type="text"
                                                     id="lastName"
                                                     name="lastName"
-                                                    placeholder="Doe"
+                                                    placeholder="Dubay"
                                                     value={formData.lastName}
                                                     onChange={handleChange}
                                                     required
@@ -495,7 +503,7 @@ const BookingPage = () => {
                                                     type="email"
                                                     id="email"
                                                     name="email"
-                                                    placeholder="john@example.com"
+                                                    placeholder="abhijeet@example.com"
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     required
@@ -512,7 +520,7 @@ const BookingPage = () => {
                                                     type="tel"
                                                     id="phone"
                                                     name="phone"
-                                                    placeholder="+1 (555) 123-4567"
+                                                    placeholder="+91 9876543210"
                                                     value={formData.phone}
                                                     onChange={handleChange}
                                                     required
@@ -527,7 +535,7 @@ const BookingPage = () => {
 
                                     {/* Special Requests */}
                                     <div className="form-section">
-                                        <h3>Special Requests</h3>
+                                        <h3>💬 Special Requests</h3>
                                         <div className="form-group">
                                             <label htmlFor="specialRequests">Additional Requests</label>
                                             <textarea
@@ -552,7 +560,14 @@ const BookingPage = () => {
                                         className="btn-book-now"
                                         disabled={isLoading}
                                     >
-                                        {isLoading ? '⏳ Processing...' : 'Request Booking'}
+                                        {isLoading ? (
+                                            <span className="loading-spinner">
+                                                <span className="spinner"></span>
+                                                Processing...
+                                            </span>
+                                        ) : (
+                                            'Request Booking'
+                                        )}
                                     </button>
 
                                     {!isAuthenticated && (
@@ -571,7 +586,7 @@ const BookingPage = () => {
 
                         {/* Booking Summary */}
                         <div className="booking-summary">
-                            <h3>Booking Summary</h3>
+                            <h3>📋 Booking Summary</h3>
                             <div className="summary-details">
                                 <div className="summary-item">
                                     <span className="summary-label">Booking Type</span>
@@ -602,7 +617,7 @@ const BookingPage = () => {
                                 <div className="summary-divider"></div>
                                 <div className="summary-total">
                                     <span className="total-label">Total Price</span>
-                                    <span className="total-value">${totalPrice || 0}</span>
+                                    <span className="total-value">₹{totalPrice || 0}</span>
                                 </div>
                                 <div className="summary-tax">
                                     <span>Including taxes & fees</span>
@@ -610,7 +625,7 @@ const BookingPage = () => {
                             </div>
 
                             <div className="summary-amenities">
-                                <h4>Included Amenities</h4>
+                                <h4>✨ Included Amenities</h4>
                                 <ul>
                                     <li>✓ Free High-Speed Wi-Fi</li>
                                     <li>✓ Complimentary Breakfast</li>
@@ -641,7 +656,7 @@ const BookingPage = () => {
                 <div className="container">
                     <div className="footer-content">
                         <div className="footer-section">
-                            <h3>Raghav Hotel</h3>
+                            <h3>🏨 Hotel RAGHAV</h3>
                             <p>Luxury redefined. Experience the best of hospitality.</p>
                         </div>
                         <div className="footer-section">
@@ -655,13 +670,13 @@ const BookingPage = () => {
                         </div>
                         <div className="footer-section">
                             <h4>Contact</h4>
-                            <p>📍 123 Luxury Avenue, City Center</p>
-                            <p>📞 +1 (555) 123-4567</p>
-                            <p>✉️ info@raghavhotel.com</p>
+                            <p>📍 7W4F+C26, Savhat, Uttar Pradesh 221011</p>
+                            <p>📞 +91 9876543210</p>
+                            <p>✉️ raghavhotel7@gmail.com</p>
                         </div>
                     </div>
                     <div className="footer-bottom">
-                        <p>© {currentYear} Raghav Hotel. All rights reserved.</p>
+                        <p>© {currentYear} Hotel RAGHAV. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
