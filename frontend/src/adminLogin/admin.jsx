@@ -137,7 +137,6 @@ const AdminLogin = () => {
 
                 <div className="admin-login-footer">
                     <a href="/">← Back to Home</a>
-                    <span>|</span>
                 </div>
 
                 <div className="admin-login-security">
