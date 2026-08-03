@@ -29,6 +29,7 @@ app.use(cors({
             'http://localhost:5000',
             process.env.FRONTEND_URL,
             config.frontendUrl,
+            'https://hotel-raghav-rltl-rouge.vercel.app',
             'https://raghav-hotel-frontend.vercel.app'
         ].filter(Boolean);
 
@@ -49,7 +50,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Session configuration - AFTER app is created
+// ✅ Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || config.sessionSecret || 'your-session-secret',
     resave: false,
@@ -110,8 +111,9 @@ const startServer = async () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || config.frontendUrl || 'Not set'}`);
-            console.log(`🔑 Google Auth: ${process.env.GOOGLE_CLIENT_ID ? '✅ Configured' : '❌ Not configured'}`);
-            console.log(`📧 Admin Email: ${process.env.ADMIN_EMAIL || 'Not set'}`);
+            // ✅ Fixed: Use config.googleClientId instead of process.env.GOOGLE_CLIENT_ID
+            console.log(`🔑 Google Auth: ${config.googleClientId ? '✅ Configured' : '❌ Not configured'}`);
+            console.log(`📧 Admin Email: ${process.env.ADMIN_EMAIL || config.email?.adminEmail || 'Not set'}`);
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error.message);
