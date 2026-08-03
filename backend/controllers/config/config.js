@@ -66,25 +66,20 @@ const config = {
     },
 
     // ✅ FIXED: CORS allowed origins
+    // controllers/config/config.js
     get corsOrigins() {
         const origins = [
             'http://localhost:5173',
             'http://localhost:3000',
             'http://localhost:5000',
-            this.frontendUrl,
-            'https://raghav-hotel-frontend.vercel.app'
-        ];
+            'https://hotel-raghav-frontend.vercel.app',
+            'https://hotel-raghav-rltl-rouge.vercel.app',  // ✅ Your correct URL
+            process.env.FRONTEND_URL_PROD,
+            process.env.FRONTEND_URL
+        ].filter(Boolean);
 
-        if (isProduction) {
-            origins.push(
-                process.env.FRONTEND_URL_PROD,
-                'https://raghav-hotel-frontend.vercel.app'
-            );
-        }
-
-        return origins.filter(Boolean);
+        return origins;
     },
-
     // Email
     email: {
         host: process.env.SMTP_HOST,
