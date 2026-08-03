@@ -121,9 +121,7 @@ const BookingPage = () => {
             }
 
             // ✅ If authenticated or guest, allow access
-            // ✅ Only redirect to home if NOT authenticated AND NOT guest
             if (!isAuth && !isGuest) {
-                // Don't redirect immediately, show a message or redirect to home
                 navigate('/');
                 return;
             }
@@ -455,7 +453,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Personal Information */}
+                                    {/* Personal Information - FIXED */}
                                     <div className="form-section">
                                         <h3>👤 Personal Information</h3>
                                         {!isAuthenticated && (
@@ -464,7 +462,7 @@ const BookingPage = () => {
                                                 <button
                                                     type="button"
                                                     className="btn-create-account"
-                                                    onClick={() => window.location.href = '/api/auth/google'}
+                                                    onClick={() => window.location.href = `${API_URL}/api/auth/google`}
                                                 >
                                                     Sign up with Google
                                                 </button>
@@ -580,10 +578,14 @@ const BookingPage = () => {
                                         )}
                                     </button>
 
+                                    {/* Guest Booking Note - FIXED */}
                                     {!isAuthenticated && (
                                         <div className="guest-booking-note">
                                             <p>💡 <strong>Tip:</strong>
-                                                <span className="clickable" onClick={() => window.location.href = '/api/auth/google'}>
+                                                <span
+                                                    className="clickable"
+                                                    onClick={() => window.location.href = `${API_URL}/api/auth/google`}
+                                                >
                                                     Sign in with Google
                                                 </span>
                                                 to save your preferences and book faster next time!
