@@ -8,7 +8,9 @@ import Restaurant from "../assets/food.jpg";
 import Lobby from "../assets/hotel4.jpeg";
 import EventHall from "../assets/hotel7.jpg";
 import GardenArea from "../assets/hotel8.jpg";
+import Room from "../assets/room.jpeg";
 import "./HotelLanding.css";
+import Room2 from "../assets/room2.jpeg"
 
 const HotelLanding = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -445,7 +447,7 @@ const HotelLanding = () => {
                         <div className="room-card featured">
                             <div className="room-badge">Popular</div>
                             <div className="room-image">
-                                <img src={RoomInterior} alt="Deluxe Room" className="room-img" />
+                                <img src={Room2} alt="Deluxe Room" className="room-img" />
                             </div>
                             <div className="room-info">
                                 <h3>Deluxe Room</h3>
@@ -462,7 +464,7 @@ const HotelLanding = () => {
 
                         <div className="room-card">
                             <div className="room-image">
-                                <img src={RoomInterior} alt="Executive Suite" className="room-img" />
+                                <img src={Room} alt="Executive Suite" className="room-img" />
                             </div>
                             <div className="room-info">
                                 <h3>Executive Suite</h3>
