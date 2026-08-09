@@ -51,7 +51,7 @@ const AdminLogin = () => {
             <div className="admin-login-container">
                 <div className="admin-login-header">
                     <div className="admin-login-logo">
-                        <span className="logo-text">Raghav Hotel</span>
+                        <span className="logo-text">Hotel RAGHAV</span>
                         <span className="logo-stars">★★★★★</span>
                     </div>
                     <h2>Admin Login</h2>
