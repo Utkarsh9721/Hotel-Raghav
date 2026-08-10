@@ -3,7 +3,6 @@ import Booking from '../models/Booking.js';
 import User from '../models/booking.js';
 import EmailService from '../controllers/utils/mail.js';
 
-// Create booking
 export const createBooking = async (req, res) => {
     try {
         const {
@@ -50,15 +49,36 @@ export const createBooking = async (req, res) => {
         const guestEmail = user ? user.email : email;
         const guestPhone = user ? user.phone : phone;
 
-        // Create booking
+        // ✅ Validate dates
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+
+        if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid date format'
+            });
+        }
+
+        if (checkInDate >= checkOutDate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Check-out date must be after check-in date'
+            });
+        }
+
+        // ✅ Calculate nights if not provided
+        const calculatedNights = parseInt(nights) || Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+
+        // ✅ Create booking
         const bookingData = {
             user: user ? user._id : null,
             roomType,
             guests: parseInt(guests),
-            checkIn: new Date(checkIn),
-            checkOut: new Date(checkOut),
+            checkIn: checkInDate,
+            checkOut: checkOutDate,
             totalPrice: parseFloat(totalPrice),
-            nights: parseInt(nights) || 0,
+            nights: calculatedNights,
             bookingStatus: 'pending',
             paymentMethod: 'cash',
             paymentStatus: 'pending',
@@ -77,8 +97,11 @@ export const createBooking = async (req, res) => {
         };
 
         const booking = new Booking(bookingData);
-        const validationError = booking.validateSync();
-        if (validationError) {
+
+        // ✅ Validate the booking
+        try {
+            await booking.validate();
+        } catch (validationError) {
             const errors = Object.values(validationError.errors).map(err => err.message);
             return res.status(400).json({
                 success: false,
@@ -90,6 +113,7 @@ export const createBooking = async (req, res) => {
         await booking.save();
         console.log('✅ Booking created:', booking.bookingReference);
 
+        // Add booking to user if user exists
         if (user && typeof user.addBooking === 'function') {
             await user.addBooking(booking._id);
         }
@@ -98,22 +122,11 @@ export const createBooking = async (req, res) => {
             .populate('user')
             .populate('assignedTo');
 
-        // Send emails
-        try {
-            await EmailService.sendBookingNotificationToAdmin(populatedBooking);
-            console.log('📧 Admin email sent');
-        } catch (emailError) {
-            console.error('Failed to send admin email:', emailError);
-        }
+        // ✅ Send emails in background WITHOUT blocking response
+        sendEmailsInBackground(populatedBooking);
 
-        try {
-            await EmailService.sendBookingConfirmationToCustomer(populatedBooking);
-            console.log('📧 Customer email sent');
-        } catch (emailError) {
-            console.error('Failed to send customer email:', emailError);
-        }
-
-        res.status(201).json({
+        // ✅ Send response immediately
+        return res.status(201).json({
             success: true,
             message: 'Booking request sent successfully! Our team will contact you shortly.',
             booking: populatedBooking,
@@ -123,9 +136,10 @@ export const createBooking = async (req, res) => {
                 name: user.fullName || `${user.firstName} ${user.lastName}`
             } : null
         });
+
     } catch (error) {
         console.error('❌ Booking creation error:', error);
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: error.message || 'Failed to create booking',
             errors: error.errors ? Object.values(error.errors).map(e => e.message) : []
@@ -133,7 +147,34 @@ export const createBooking = async (req, res) => {
     }
 };
 
-// Get all bookings (Admin only)
+// ============================================
+// ✅ BACKGROUND EMAIL SENDING (Non-blocking)
+// ============================================
+const sendEmailsInBackground = async (booking) => {
+    try {
+        // Send admin email
+        try {
+            await EmailService.sendBookingNotificationToAdmin(booking);
+            console.log('📧 Admin email sent successfully');
+        } catch (emailError) {
+            console.error('❌ Failed to send admin email:', emailError.message);
+        }
+
+        // Send customer email
+        try {
+            await EmailService.sendBookingConfirmationToCustomer(booking);
+            console.log('📧 Customer email sent successfully');
+        } catch (emailError) {
+            console.error('❌ Failed to send customer email:', emailError.message);
+        }
+    } catch (error) {
+        console.error('❌ Email sending error:', error);
+    }
+};
+
+// ============================================
+// ✅ GET ALL BOOKINGS (Admin only)
+// ============================================
 export const getAllBookings = async (req, res) => {
     try {
         const bookings = await Booking.find()
@@ -148,14 +189,16 @@ export const getAllBookings = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all bookings error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get bookings'
         });
     }
 };
 
-// Get booking by ID (Admin only)
+// ============================================
+// ✅ GET BOOKING BY ID (Admin only)
+// ============================================
 export const getBookingById = async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id)
@@ -175,14 +218,16 @@ export const getBookingById = async (req, res) => {
         });
     } catch (error) {
         console.error('Get booking error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get booking'
         });
     }
 };
 
-// Update booking status (Admin only)
+// ============================================
+// ✅ UPDATE BOOKING STATUS (Admin only)
+// ============================================
 export const updateBookingStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -237,14 +282,16 @@ export const updateBookingStatus = async (req, res) => {
         });
     } catch (error) {
         console.error('Update booking status error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to update booking status'
         });
     }
 };
 
-// Add contact history (Admin only)
+// ============================================
+// ✅ ADD CONTACT HISTORY (Admin only)
+// ============================================
 export const addContactHistory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -280,14 +327,16 @@ export const addContactHistory = async (req, res) => {
         });
     } catch (error) {
         console.error('Add contact history error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to add contact history'
         });
     }
 };
 
-// Get booking stats (Admin only)
+// ============================================
+// ✅ GET BOOKING STATS (Admin only)
+// ============================================
 export const getBookingStats = async (req, res) => {
     try {
         const total = await Booking.countDocuments();
@@ -323,14 +372,16 @@ export const getBookingStats = async (req, res) => {
         });
     } catch (error) {
         console.error('Get booking stats error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get booking stats'
         });
     }
 };
 
-// Get my bookings (User)
+// ============================================
+// ✅ GET MY BOOKINGS (User)
+// ============================================
 export const getMyBookings = async (req, res) => {
     try {
         if (!req.user) {
@@ -350,17 +401,20 @@ export const getMyBookings = async (req, res) => {
         });
     } catch (error) {
         console.error('Get my bookings error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get your bookings'
         });
     }
 };
 
-// Cancel booking (User)
+// ============================================
+// ✅ CANCEL BOOKING (User)
+// ============================================
 export const cancelBooking = async (req, res) => {
     try {
         const { id } = req.params;
+        const { reason } = req.body;
 
         if (!req.user) {
             return res.status(401).json({
@@ -397,11 +451,11 @@ export const cancelBooking = async (req, res) => {
 
         booking.bookingStatus = 'cancelled';
         booking.cancelledAt = new Date();
-        booking.cancellationReason = req.body.reason || 'Cancelled by user';
+        booking.cancellationReason = reason || 'Cancelled by user';
 
         await booking.save();
 
-        // Send cancellation email
+        // Send cancellation email (in background)
         try {
             await EmailService.sendBookingCancelledEmailToCustomer(booking, booking.cancellationReason);
         } catch (emailError) {
@@ -415,9 +469,102 @@ export const cancelBooking = async (req, res) => {
         });
     } catch (error) {
         console.error('Cancel booking error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to cancel booking'
         });
     }
+};
+
+// ============================================
+// ✅ GET BOOKINGS BY DATE RANGE (Admin only)
+// ============================================
+export const getBookingsByDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide startDate and endDate'
+            });
+        }
+
+        const bookings = await Booking.find({
+            checkIn: { $gte: new Date(startDate) },
+            checkOut: { $lte: new Date(endDate) }
+        })
+            .populate('user')
+            .populate('assignedTo')
+            .sort({ checkIn: 1 });
+
+        res.status(200).json({
+            success: true,
+            count: bookings.length,
+            bookings
+        });
+    } catch (error) {
+        console.error('Get bookings by date range error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to get bookings by date range'
+        });
+    }
+};
+
+// ============================================
+// ✅ SEARCH BOOKINGS (Admin only)
+// ============================================
+export const searchBookings = async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        if (!query) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a search query'
+            });
+        }
+
+        const bookings = await Booking.find({
+            $or: [
+                { bookingReference: { $regex: query, $options: 'i' } },
+                { 'guestDetails.firstName': { $regex: query, $options: 'i' } },
+                { 'guestDetails.lastName': { $regex: query, $options: 'i' } },
+                { 'guestDetails.email': { $regex: query, $options: 'i' } },
+                { 'guestDetails.phone': { $regex: query, $options: 'i' } }
+            ]
+        })
+            .populate('user')
+            .populate('assignedTo')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: bookings.length,
+            bookings
+        });
+    } catch (error) {
+        console.error('Search bookings error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to search bookings'
+        });
+    }
+};
+
+// ============================================
+// ✅ EXPORT ALL FUNCTIONS
+// ============================================
+export default {
+    createBooking,
+    getAllBookings,
+    getBookingById,
+    updateBookingStatus,
+    addContactHistory,
+    getBookingStats,
+    getMyBookings,
+    cancelBooking,
+    getBookingsByDateRange,
+    searchBookings
 };

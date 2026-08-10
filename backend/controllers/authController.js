@@ -32,7 +32,7 @@ const generateAdminToken = (user) => {
 };
 
 // ============================================
-// GOOGLE OAUTH CONTROLLERS
+// ✅ GOOGLE OAUTH CONTROLLERS
 // ============================================
 
 // Google Auth - Initiate
@@ -87,6 +87,7 @@ export const googleAuthSuccess = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Google auth success error:', error);
         res.status(500).json({
             success: false,
             message: error.message
@@ -95,7 +96,7 @@ export const googleAuthSuccess = async (req, res) => {
 };
 
 // ============================================
-// LOCAL AUTHENTICATION CONTROLLERS
+// ✅ LOCAL AUTHENTICATION CONTROLLERS
 // ============================================
 
 // Register new user
@@ -110,6 +111,23 @@ export const register = async (req, res) => {
             phone
         } = req.body;
 
+        // ✅ Validate required fields
+        if (!firstName || !lastName || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all required fields'
+            });
+        }
+
+        // ✅ Check if passwords match
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Passwords do not match'
+            });
+        }
+
+        // ✅ Check if user exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({
@@ -118,29 +136,35 @@ export const register = async (req, res) => {
             });
         }
 
+        // ✅ Create user
         const user = await User.create({
             firstName,
             lastName,
             email: email.toLowerCase(),
             password,
-            confirmPassword,
-            phone,
+            phone: phone || '',
             authMethod: 'local',
             userType: 'registered',
             isVerified: false,
-            isAdmin: false
+            isAdmin: false,
+            isActive: true
         });
 
+        // ✅ Generate verification token
         const verificationToken = user.getEmailVerificationToken();
         await user.save({ validateBeforeSave: false });
 
+        // ✅ Send verification email (in background)
         try {
             const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
             await EmailService.sendVerificationEmail(user, verificationUrl);
+            console.log('📧 Verification email sent to:', user.email);
         } catch (emailError) {
             console.error('Failed to send verification email:', emailError);
+            // Don't fail registration if email fails
         }
 
+        // ✅ Generate token
         const token = generateToken(user);
 
         res.status(201).json({
@@ -161,7 +185,7 @@ export const register = async (req, res) => {
         console.error('Registration error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to register user'
         });
     }
 };
@@ -226,7 +250,7 @@ export const login = async (req, res) => {
         console.error('Login error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to login'
         });
     }
 };
@@ -302,12 +326,23 @@ export const adminLogin = async (req, res) => {
     }
 };
 
+// ============================================
+// ✅ USER PROFILE CONTROLLERS
+// ============================================
+
 // Get current user profile
 export const getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
             .populate('bookings')
             .populate('favoriteRooms');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
 
         res.status(200).json({
             success: true,
@@ -334,7 +369,7 @@ export const getMe = async (req, res) => {
         console.error('Get profile error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get profile'
         });
     }
 };
@@ -382,10 +417,14 @@ export const updateProfile = async (req, res) => {
         console.error('Update profile error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to update profile'
         });
     }
 };
+
+// ============================================
+// ✅ PASSWORD MANAGEMENT
+// ============================================
 
 // Change password
 export const changePassword = async (req, res) => {
@@ -434,7 +473,7 @@ export const changePassword = async (req, res) => {
         console.error('Change password error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to change password'
         });
     }
 };
@@ -492,7 +531,7 @@ export const forgotPassword = async (req, res) => {
         console.error('Forgot password error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to process forgot password'
         });
     }
 };
@@ -540,13 +579,13 @@ export const resetPassword = async (req, res) => {
         console.error('Reset password error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to reset password'
         });
     }
 };
 
 // ============================================
-// EMAIL VERIFICATION CONTROLLERS
+// ✅ EMAIL VERIFICATION CONTROLLERS
 // ============================================
 
 // Verify email
@@ -584,7 +623,7 @@ export const verifyEmail = async (req, res) => {
         console.error('Verify email error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to verify email'
         });
     }
 };
@@ -631,13 +670,13 @@ export const resendVerification = async (req, res) => {
         console.error('Resend verification error:', error);
         res.status(400).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to resend verification'
         });
     }
 };
 
 // ============================================
-// AUTH STATUS & SESSION CONTROLLERS
+// ✅ AUTH STATUS & SESSION CONTROLLERS
 // ============================================
 
 // Check authentication status
@@ -757,7 +796,7 @@ export const logout = (req, res) => {
 };
 
 // ============================================
-// ADMIN CONTROLLER FUNCTIONS
+// ✅ ADMIN CONTROLLER FUNCTIONS
 // ============================================
 
 // Get all users (Admin only)
@@ -772,9 +811,9 @@ export const getAllUsers = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all users error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get users'
         });
     }
 };
@@ -800,9 +839,9 @@ export const getUserById = async (req, res) => {
         });
     } catch (error) {
         console.error('Get user by ID error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get user'
         });
     }
 };
@@ -843,9 +882,9 @@ export const updateUser = async (req, res) => {
         });
     } catch (error) {
         console.error('Update user error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to update user'
         });
     }
 };
@@ -868,9 +907,9 @@ export const deleteUser = async (req, res) => {
         });
     } catch (error) {
         console.error('Delete user error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to delete user'
         });
     }
 };
@@ -898,9 +937,49 @@ export const getSystemStats = async (req, res) => {
         });
     } catch (error) {
         console.error('Get system stats error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to get system stats'
         });
     }
+};
+
+// ============================================
+// ✅ EXPORT ALL FUNCTIONS
+// ============================================
+
+export default {
+    // Google Auth
+    googleAuth,
+    googleCallback,
+    googleAuthSuccess,
+
+    // Local Auth
+    register,
+    login,
+    adminLogin,
+
+    // Profile
+    getMe,
+    updateProfile,
+
+    // Password
+    changePassword,
+    forgotPassword,
+    resetPassword,
+
+    // Email Verification
+    verifyEmail,
+    resendVerification,
+
+    // Auth Status
+    checkAuthStatus,
+    logout,
+
+    // Admin
+    getAllUsers,
+    getUserById,
+    updateUser,
+    deleteUser,
+    getSystemStats
 };
