@@ -3,7 +3,6 @@ import User from '../models/booking.js'; // ✅ FIXED: Changed from 'booking.js'
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import EmailService from '../controllers/utils/mail.js'; // ✅ FIXED: Changed from 'controllers/utils/mail.js'
-// Generate JWT Token
 
 const generateToken = (user) => {
     return jwt.sign(
@@ -276,6 +275,7 @@ export const adminLogin = async (req, res) => {
         }).select('+password');
 
         if (!user) {
+            console.log('❌ Admin user not found:', email);
             return res.status(401).json({
                 success: false,
                 message: 'Invalid admin credentials'
@@ -292,6 +292,7 @@ export const adminLogin = async (req, res) => {
         // Check password
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
+            console.log('❌ Invalid admin password for:', email);
             return res.status(401).json({
                 success: false,
                 message: 'Invalid admin credentials'
@@ -301,8 +302,10 @@ export const adminLogin = async (req, res) => {
         // Update last login
         await user.updateLastLogin();
 
-        // Generate admin token (shorter expiry for security)
+        // Generate admin token
         const token = generateAdminToken(user);
+
+        console.log('✅ Admin login successful:', email);
 
         res.status(200).json({
             success: true,

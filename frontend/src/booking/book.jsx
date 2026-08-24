@@ -60,7 +60,6 @@ const BookingPage = () => {
             let isAuth = false;
             let userData = null;
 
-            // ✅ Check if user is authenticated
             if (token) {
                 try {
                     const response = await fetch(`${API_URL}/api/auth/status`, {
@@ -87,10 +86,7 @@ const BookingPage = () => {
                 }
             }
 
-            // ✅ Check if user came from guest booking
             const isGuest = window.location.pathname.includes('booking-guest');
-
-            // ✅ Check if room data was passed from landing page
             const state = location.state;
 
             if (state) {
@@ -113,14 +109,12 @@ const BookingPage = () => {
                 }
             }
 
-            // ✅ Handle guest booking - allow access
             if (isGuest) {
                 setIsAuthenticated(false);
                 setAuthChecked(true);
                 return;
             }
 
-            // ✅ If authenticated or guest, allow access
             if (!isAuth && !isGuest) {
                 navigate('/');
                 return;
@@ -218,7 +212,11 @@ const BookingPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // ✅ Show loading state immediately when button is clicked
+        setIsLoading(true);
+
         if (!validateForm()) {
+            setIsLoading(false);
             const firstErrorField = Object.keys(formErrors)[0];
             if (firstErrorField) {
                 const element = document.getElementById(firstErrorField);
@@ -229,8 +227,6 @@ const BookingPage = () => {
             }
             return;
         }
-
-        setIsLoading(true);
 
         try {
             const token = localStorage.getItem('token');
@@ -269,6 +265,7 @@ const BookingPage = () => {
                 setBookingSuccess(true);
                 setBookingReference(data.booking?.bookingReference || 'N/A');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                setIsLoading(false);
 
                 setTimeout(() => {
                     setBookingSuccess(false);
@@ -282,11 +279,11 @@ const BookingPage = () => {
             } else {
                 const errorMsg = data.errors ? data.errors.join('\n') : data.message;
                 alert('❌ ' + (errorMsg || 'Failed to create booking. Please try again.'));
+                setIsLoading(false);
             }
         } catch (error) {
             console.error('❌ Booking error:', error);
             alert('Failed to create booking. Please check your connection and try again.');
-        } finally {
             setIsLoading(false);
         }
     };
@@ -305,7 +302,6 @@ const BookingPage = () => {
         );
     }
 
-    // ✅ Only return null if not authenticated AND not guest
     if (!isAuthenticated && !window.location.pathname.includes('booking-guest')) {
         return null;
     }
@@ -453,7 +449,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Personal Information - FIXED */}
+                                    {/* Personal Information */}
                                     <div className="form-section">
                                         <h3>👤 Personal Information</h3>
                                         {!isAuthenticated && (
@@ -562,10 +558,10 @@ const BookingPage = () => {
                                         <p>📋 <strong>Note:</strong> Our team will contact you within 24 hours to confirm your booking. No payment is required at this time.</p>
                                     </div>
 
-                                    {/* Submit Button */}
+                                    {/* ✅ Submit Button with Loading State */}
                                     <button
                                         type="submit"
-                                        className="btn-book-now"
+                                        className={`btn-book-now ${isLoading ? 'loading' : ''}`}
                                         disabled={isLoading}
                                     >
                                         {isLoading ? (
@@ -578,7 +574,6 @@ const BookingPage = () => {
                                         )}
                                     </button>
 
-                                    {/* Guest Booking Note - FIXED */}
                                     {!isAuthenticated && (
                                         <div className="guest-booking-note">
                                             <p>💡 <strong>Tip:</strong>

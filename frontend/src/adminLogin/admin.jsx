@@ -1,6 +1,7 @@
 // AdminLogin.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
@@ -18,15 +19,18 @@ const AdminLogin = () => {
         setError('');
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/admin-login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
+            const response = await axios.post(
+                `${API_URL}/api/auth/admin-login`,
+                { email, password },
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    withCredentials: true
+                }
+            );
 
-            const data = await response.json();
+            const data = response.data;
 
             if (data.success) {
                 // Store admin token and info
@@ -40,7 +44,18 @@ const AdminLogin = () => {
             }
         } catch (error) {
             console.error('Admin login error:', error);
-            setError('Failed to login. Please try again.');
+
+            // Handle different error types
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                setError(error.response.data?.message || 'Invalid credentials');
+            } else if (error.request) {
+                // The request was made but no response was received
+                setError('No response from server. Please check your connection.');
+            } else {
+                // Something happened in setting up the request
+                setError('Failed to login. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
