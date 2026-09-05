@@ -4,7 +4,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "projectName": "hotel-raghav-app",
+  "projectName": "hotel-raghav",
   "rewrites": [
     {
       "source": "/(.*)",
