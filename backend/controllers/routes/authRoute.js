@@ -18,7 +18,7 @@ import {
     verifyEmail,
     resendVerification
 } from '../authController.js';
-import { protect } from '../middlewhere/auth.js';
+import { protect } from '../middlewhere/authmiddlewhere.js';
 
 const router = express.Router();
 

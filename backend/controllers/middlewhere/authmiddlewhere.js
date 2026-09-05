@@ -1,8 +1,8 @@
 // middleware/auth.js
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-// Protect routes - JWT authentication
-exports.protect = async (req, res, next) => {
+import User from '../../models/booking.js';
+
+export const protect = async (req, res, next) => {
     try {
         let token;
 
@@ -56,8 +56,8 @@ exports.protect = async (req, res, next) => {
     }
 };
 
-// Authorize roles
-exports.authorize = (...roles) => {
+// ─── AUTHORIZE ROLES ─────────────────────────────
+export const authorize = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role || 'user')) {
             return res.status(403).json({
@@ -69,8 +69,8 @@ exports.authorize = (...roles) => {
     };
 };
 
-// Check if user is authenticated (for UI)
-exports.isAuthenticated = async (req, res) => {
+// ─── CHECK AUTHENTICATION ────────────────────────
+export const isAuthenticated = async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
 
@@ -99,4 +99,11 @@ exports.isAuthenticated = async (req, res) => {
     } catch (error) {
         res.json({ isAuthenticated: false });
     }
+};
+
+// ─── DEFAULT EXPORT ──────────────────────────────
+export default {
+    protect,
+    authorize,
+    isAuthenticated
 };
