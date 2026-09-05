@@ -22,26 +22,34 @@ import { protect } from '../middlewhere/auth.js';
 
 const router = express.Router();
 
+console.log('🔐 Auth Routes loaded');
+
 // ============================================
 // GOOGLE OAUTH ROUTES
 // ============================================
 
-router.get('/google',
+// Initiate Google login
+router.get('/google', (req, res, next) => {
+    console.log('🔑 Google auth initiated');
     passport.authenticate('google', {
         scope: ['profile', 'email'],
         prompt: 'select_account',
         accessType: 'offline'
-    })
-);
+    })(req, res, next);
+});
 
-router.get('/google/callback',
+// Google callback
+router.get('/google/callback', (req, res, next) => {
+    console.log('🔄 Google callback received');
+    console.log('📋 Query params:', req.query);
+
     passport.authenticate('google', {
         failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=google_auth_failed`,
-        session: true
-    }),
-    googleCallback
-);
+        session: false
+    })(req, res, next);
+}, googleCallback);
 
+// Success route
 router.get('/success', googleAuthSuccess);
 
 // ============================================
@@ -80,26 +88,5 @@ router.post('/resend-verification', resendVerification);
 
 router.get('/status', checkAuthStatus);
 router.post('/logout', protect, logout);
-
-// ============================================
-// ✅ DEBUG ROUTE - Check available routes
-// ============================================
-router.get('/debug-routes', (req, res) => {
-    const routes = [];
-    router.stack.forEach((layer) => {
-        if (layer.route) {
-            const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
-            routes.push({
-                path: layer.route.path,
-                methods: methods
-            });
-        }
-    });
-    res.json({
-        success: true,
-        totalRoutes: routes.length,
-        routes: routes
-    });
-});
 
 export default router;
