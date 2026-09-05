@@ -15,6 +15,7 @@ const BookingPage = () => {
 
     // Get backend URL from environment
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const FRONTEND_URL = import.meta.env.VITE_APP_URL || 'https://hotel-raghav.vercel.app';
 
     // Form state
     const [formData, setFormData] = useState({
@@ -53,7 +54,7 @@ const BookingPage = () => {
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-    // Check authentication and redirect in useEffect
+    // ─── AUTHENTICATION CHECK ────────────────────────
     useEffect(() => {
         const checkAuthAndRedirect = async () => {
             const token = localStorage.getItem('token');
@@ -126,12 +127,12 @@ const BookingPage = () => {
         checkAuthAndRedirect();
     }, [location, API_URL, navigate]);
 
-    // Calculate total price when form changes
+    // ─── CALCULATE TOTAL ────────────────────────────
     useEffect(() => {
         calculateTotal();
     }, [formData.checkIn, formData.checkOut, formData.roomType, formData.guests]);
 
-    // Update progress
+    // ─── UPDATE PROGRESS ────────────────────────────
     useEffect(() => {
         let prog = 0;
         if (formData.roomType) prog += 20;
@@ -209,10 +210,21 @@ const BookingPage = () => {
         return Object.keys(errors).length === 0;
     };
 
+    // ─── HANDLE GOOGLE LOGIN ────────────────────────
+    const handleGoogleLogin = () => {
+        // Store current booking data before redirect
+        localStorage.setItem('bookingData', JSON.stringify({
+            roomType: formData.roomType,
+            guests: formData.guests,
+            checkIn: formData.checkIn,
+            checkOut: formData.checkOut
+        }));
+        window.location.href = `${API_URL}/api/auth/google`;
+    };
+
+    // ─── HANDLE BOOKING SUBMIT ──────────────────────
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // ✅ Show loading state immediately when button is clicked
         setIsLoading(true);
 
         if (!validateForm()) {
@@ -292,7 +304,7 @@ const BookingPage = () => {
         return roomLabels[type] || type;
     };
 
-    // Show loading state while checking auth
+    // ─── LOADING STATE ──────────────────────────────
     if (!authChecked) {
         return (
             <div className="loading-screen">
@@ -308,7 +320,7 @@ const BookingPage = () => {
 
     return (
         <div className="booking-page">
-            {/* Navigation */}
+            {/* ─── NAVIGATION ────────────────────────── */}
             <nav className="booking-nav">
                 <div className="nav-container">
                     <div className="nav-logo" onClick={() => navigate('/')}>
@@ -330,7 +342,7 @@ const BookingPage = () => {
                 </div>
             </nav>
 
-            {/* Booking Hero */}
+            {/* ─── HERO ────────────────────────────────── */}
             <section className="booking-hero">
                 <div className="booking-hero-content">
                     <h1>📅 Book Your Stay</h1>
@@ -338,7 +350,7 @@ const BookingPage = () => {
                 </div>
             </section>
 
-            {/* Progress Bar */}
+            {/* ─── PROGRESS BAR ───────────────────────── */}
             <div className="progress-container">
                 <div className="progress-bar">
                     <div className="progress-fill" style={{ width: `${progress}%` }}></div>
@@ -351,7 +363,7 @@ const BookingPage = () => {
                 </div>
             </div>
 
-            {/* Booking Form */}
+            {/* ─── BOOKING FORM ───────────────────────── */}
             <section className="booking-form-section">
                 <div className="container">
                     <div className="booking-wrapper">
@@ -374,7 +386,7 @@ const BookingPage = () => {
 
                             {!bookingSuccess && (
                                 <form onSubmit={handleSubmit} className="booking-form" noValidate>
-                                    {/* Room Selection */}
+                                    {/* ─── ROOM SELECTION ──────────────────── */}
                                     <div className="form-section">
                                         <h3>🏠 Room Selection</h3>
                                         <div className="form-row">
@@ -410,7 +422,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Date Selection */}
+                                    {/* ─── DATE SELECTION ──────────────────── */}
                                     <div className="form-section">
                                         <h3>📅 Select Dates</h3>
                                         <div className="form-row">
@@ -449,7 +461,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Personal Information */}
+                                    {/* ─── PERSONAL INFO ───────────────────── */}
                                     <div className="form-section">
                                         <h3>👤 Personal Information</h3>
                                         {!isAuthenticated && (
@@ -458,8 +470,14 @@ const BookingPage = () => {
                                                 <button
                                                     type="button"
                                                     className="btn-create-account"
-                                                    onClick={() => window.location.href = `${API_URL}/api/auth/google`}
+                                                    onClick={handleGoogleLogin}
                                                 >
+                                                    <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '8px' }}>
+                                                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                                                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                                                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                                                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                                                    </svg>
                                                     Sign up with Google
                                                 </button>
                                             </div>
@@ -471,7 +489,7 @@ const BookingPage = () => {
                                                     type="text"
                                                     id="firstName"
                                                     name="firstName"
-                                                    placeholder="Abhijeet"
+                                                    placeholder="Your first name"
                                                     value={formData.firstName}
                                                     onChange={handleChange}
                                                     required
@@ -488,7 +506,7 @@ const BookingPage = () => {
                                                     type="text"
                                                     id="lastName"
                                                     name="lastName"
-                                                    placeholder="Dubay"
+                                                    placeholder="Your last name"
                                                     value={formData.lastName}
                                                     onChange={handleChange}
                                                     required
@@ -507,7 +525,7 @@ const BookingPage = () => {
                                                     type="email"
                                                     id="email"
                                                     name="email"
-                                                    placeholder="abhijeet@example.com"
+                                                    placeholder="your@email.com"
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     required
@@ -537,7 +555,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Special Requests */}
+                                    {/* ─── SPECIAL REQUESTS ────────────────── */}
                                     <div className="form-section">
                                         <h3>💬 Special Requests</h3>
                                         <div className="form-group">
@@ -553,12 +571,12 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Booking Note */}
+                                    {/* ─── BOOKING NOTE ────────────────────── */}
                                     <div className="booking-note">
                                         <p>📋 <strong>Note:</strong> Our team will contact you within 24 hours to confirm your booking. No payment is required at this time.</p>
                                     </div>
 
-                                    {/* ✅ Submit Button with Loading State */}
+                                    {/* ─── SUBMIT ───────────────────────────── */}
                                     <button
                                         type="submit"
                                         className={`btn-book-now ${isLoading ? 'loading' : ''}`}
@@ -574,12 +592,13 @@ const BookingPage = () => {
                                         )}
                                     </button>
 
+                                    {/* ─── GUEST TIP ───────────────────────── */}
                                     {!isAuthenticated && (
                                         <div className="guest-booking-note">
                                             <p>💡 <strong>Tip:</strong>
                                                 <span
                                                     className="clickable"
-                                                    onClick={() => window.location.href = `${API_URL}/api/auth/google`}
+                                                    onClick={handleGoogleLogin}
                                                 >
                                                     Sign in with Google
                                                 </span>
@@ -591,7 +610,7 @@ const BookingPage = () => {
                             )}
                         </div>
 
-                        {/* Booking Summary */}
+                        {/* ─── BOOKING SUMMARY ───────────────────── */}
                         <div className="booking-summary">
                             <h3>📋 Booking Summary</h3>
                             <div className="summary-details">
@@ -658,7 +677,7 @@ const BookingPage = () => {
                 </div>
             </section>
 
-            {/* Footer */}
+            {/* ─── FOOTER ────────────────────────────── */}
             <footer className="booking-footer">
                 <div className="container">
                     <div className="footer-content">
