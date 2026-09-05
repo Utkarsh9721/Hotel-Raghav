@@ -4,10 +4,17 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
+  "projectName": "hotel-raghav-app",
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "builds": [
+    {
+      "src": "public/_redirects",
+      "use": "@vercel/static"
     }
   ]
 }
