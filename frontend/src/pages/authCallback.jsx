@@ -1,6 +1,7 @@
-// pages/AuthCallback.jsx
+// src/pages/authCallback.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './auth.css'
 
 const AuthCallback = () => {
     const [loading, setLoading] = useState(true);
@@ -13,37 +14,45 @@ const AuthCallback = () => {
             try {
                 const searchParams = new URLSearchParams(location.search);
                 const token = searchParams.get('token');
+                const errorParam = searchParams.get('error');
 
-                if (token) {
-                    // Store token
-                    localStorage.setItem('token', token);
+                if (errorParam) {
+                    setError('Authentication failed: ' + errorParam);
+                    setLoading(false);
+                    setTimeout(() => navigate('/'), 3000);
+                    return;
+                }
 
-                    // Check for selected room
-                    const selectedRoom = localStorage.getItem('selectedRoom');
-                    if (selectedRoom) {
-                        localStorage.removeItem('selectedRoom');
-                        const roomData = JSON.parse(selectedRoom);
-                        // Redirect to booking with room selection
-                        navigate('/booking', {
-                            state: {
-                                roomType: roomData.roomType,
-                                price: roomData.price
-                            }
-                        });
-                    } else {
-                        // Redirect to home
-                        navigate('/');
-                    }
+                if (!token) {
+                    setError('No authentication token received');
+                    setLoading(false);
+                    setTimeout(() => navigate('/'), 3000);
+                    return;
+                }
+
+                // Store token
+                localStorage.setItem('token', token);
+
+                // Check for selected room
+                const selectedRoom = localStorage.getItem('selectedRoom');
+                if (selectedRoom) {
+                    localStorage.removeItem('selectedRoom');
+                    const roomData = JSON.parse(selectedRoom);
+                    navigate('/booking', {
+                        state: {
+                            roomType: roomData.roomType,
+                            price: roomData.price
+                        }
+                    });
                 } else {
-                    setError('No token received');
-                    navigate('/login?error=no_token');
+                    // Redirect to home
+                    navigate('/');
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
                 setError(error.message);
-                navigate('/login?error=auth_failed');
-            } finally {
                 setLoading(false);
+                setTimeout(() => navigate('/'), 3000);
             }
         };
 
@@ -66,9 +75,10 @@ const AuthCallback = () => {
         return (
             <div className="auth-callback-container">
                 <div className="auth-callback-content error">
-                    <h2>❌ Authentication Failed</h2>
+                    <div className="error-icon">❌</div>
+                    <h2>Authentication Failed</h2>
                     <p>{error}</p>
-                    <button onClick={() => navigate('/login')}>Try Again</button>
+                    <button onClick={() => navigate('/')}>Return to Home</button>
                 </div>
             </div>
         );
