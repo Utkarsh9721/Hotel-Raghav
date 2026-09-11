@@ -24,7 +24,7 @@ export const createBooking = async (req, res) => {
         console.log('📝 Booking Data Received:', req.body);
 
         // Validate required fields
-        const requiredFields = ['roomType', 'guests', 'checkIn', 'checkOut', 'totalPrice', 'firstName', 'lastName', 'email', 'phone'];
+        const requiredFields = ['roomType', 'guests', 'checkIn', 'checkOut', 'totalPrice', 'firstName', 'email', 'phone'];
         const missingFields = requiredFields.filter(field => !req.body[field] || req.body[field] === '');
 
         if (missingFields.length > 0) {
