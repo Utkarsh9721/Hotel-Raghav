@@ -1,6 +1,6 @@
 // controllers/bookingController.js
 import Booking from '../models/Booking.js';
-import User from '../models/User.js';  // ✅ FIXED: Changed from '../models/booking.js'
+import User from '../models/booking.js';  // ✅ FIXED: Changed from '../models/booking.js'
 import EmailService from '../controllers/utils/mail.js';
 
 export const createBooking = async (req, res) => {
