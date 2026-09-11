@@ -1,6 +1,6 @@
 // controllers/bookingController.js
 import Booking from '../models/Booking.js';
-import User from '../models/booking.js';
+import User from '../models/User.js';  // ✅ FIXED: Changed from '../models/booking.js'
 import EmailService from '../controllers/utils/mail.js';
 
 export const createBooking = async (req, res) => {
@@ -14,7 +14,7 @@ export const createBooking = async (req, res) => {
             totalPrice,
             nights,
             firstName,
-            lastName,
+            lastName,   // Optional
             email,
             phone,
             isGuest,
@@ -23,7 +23,7 @@ export const createBooking = async (req, res) => {
 
         console.log('📝 Booking Data Received:', req.body);
 
-        // Validate required fields
+        // ✅ Last name is NOT required
         const requiredFields = ['roomType', 'guests', 'checkIn', 'checkOut', 'totalPrice', 'firstName', 'email', 'phone'];
         const missingFields = requiredFields.filter(field => !req.body[field] || req.body[field] === '');
 
@@ -43,9 +43,9 @@ export const createBooking = async (req, res) => {
             user = req.user;
         }
 
-        // Use provided values or user values
+        // ✅ Use provided values or user values — last name optional
         const guestFirstName = user ? user.firstName : firstName;
-        const guestLastName = user ? user.lastName : lastName;
+        const guestLastName = user ? (user.lastName || '') : (lastName || '');
         const guestEmail = user ? user.email : email;
         const guestPhone = user ? user.phone : phone;
 
@@ -84,7 +84,7 @@ export const createBooking = async (req, res) => {
             paymentStatus: 'pending',
             guestDetails: {
                 firstName: guestFirstName,
-                lastName: guestLastName || 'Unknown',
+                lastName: guestLastName || '',  // ✅ Empty if not provided
                 email: guestEmail,
                 phone: guestPhone || 'Not provided',
                 specialRequests: specialRequests || 'None'
@@ -133,7 +133,8 @@ export const createBooking = async (req, res) => {
             user: user ? {
                 id: user._id,
                 email: user.email,
-                name: user.fullName || `${user.firstName} ${user.lastName}`
+                // ✅ Handle user without last name
+                name: user.fullName || `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
             } : null
         });
 
