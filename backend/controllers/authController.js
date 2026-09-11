@@ -739,7 +739,6 @@ export const checkAuthStatus = async (req, res) => {
             });
         } catch (jwtError) {
             console.error('JWT verification error:', jwtError.message);
-            res.setHeader('Clear-Site-Data', '"cookies", "storage"');
             res.status(200).json({
                 isAuthenticated: false,
                 message: 'Invalid or expired token',
@@ -758,7 +757,6 @@ export const checkAuthStatus = async (req, res) => {
 // Logout user
 export const logout = (req, res) => {
     try {
-        res.setHeader('Clear-Site-Data', '"cookies", "storage"');
 
         if (req.logout) {
             req.logout((err) => {
