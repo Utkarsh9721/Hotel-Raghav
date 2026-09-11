@@ -26,7 +26,6 @@ const HotelLanding = () => {
 
     const API_URL = import.meta.env.VITE_API_URL || 'https://hotel-raghav.onrender.com';
 
-    // Contact form state
     const [contactForm, setContactForm] = useState({
         name: '',
         email: '',
@@ -42,7 +41,6 @@ const HotelLanding = () => {
         setCurrentYear(new Date().getFullYear());
         checkAuthStatus();
 
-        // Handle OAuth callback
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         if (token) {
@@ -123,6 +121,11 @@ const HotelLanding = () => {
                 price: selectedRoom?.price
             }
         });
+    };
+
+    const handleAdminLogin = () => {
+        setIsMenuOpen(false);
+        navigate('/admin/login');
     };
 
     const handleLogoutClick = () => setShowLogoutConfirm(true);
@@ -226,7 +229,18 @@ const HotelLanding = () => {
                             <li><a href="#amenities" onClick={() => scrollToSection("amenities")}>Amenities</a></li>
                             <li><a href="#gallery" onClick={() => scrollToSection("gallery")}>Gallery</a></li>
                             <li><a href="#contact" onClick={() => scrollToSection("contact")}>Contact</a></li>
-                            <li><a href="/admin/login" className="admin-link">🔐 Admin</a></li>
+                            <li>
+                                <a
+                                    href="api/auth/admin-login"
+                                    className="admin-link"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleAdminLogin();
+                                    }}
+                                >
+                                    🔐 Admin
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
@@ -246,9 +260,18 @@ const HotelLanding = () => {
                                 </button>
                             </div>
                         ) : (
-                            <button className="btn-book-now" onClick={() => handleBookNow()}>
-                                Book Now
-                            </button>
+                            <>
+                                <button className="btn-book-now" onClick={() => handleBookNow()}>
+                                    Book Now
+                                </button>
+                                <button
+                                    className="btn-admin-nav"
+                                    onClick={handleAdminLogin}
+                                    title="Admin Login"
+                                >
+                                    🔐
+                                </button>
+                            </>
                         )}
                     </div>
 
@@ -678,11 +701,21 @@ const HotelLanding = () => {
                         <div className="footer-section">
                             <h4>Quick Links</h4>
                             <ul>
-                                <li><a href="#home">Home</a></li>
-                                <li><a href="#rooms">Rooms</a></li>
-                                <li><a href="#about">About</a></li>
-                                <li><a href="#contact">Contact</a></li>
-                                <li><a href="/admin/login">Admin Login</a></li>
+                                <li><a href="#home" onClick={() => scrollToSection("home")}>Home</a></li>
+                                <li><a href="#rooms" onClick={() => scrollToSection("rooms")}>Rooms</a></li>
+                                <li><a href="#about" onClick={() => scrollToSection("about")}>About</a></li>
+                                <li><a href="#contact" onClick={() => scrollToSection("contact")}>Contact</a></li>
+                                <li>
+                                    <a
+                                        href="/admin/login"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleAdminLogin();
+                                        }}
+                                    >
+                                        Admin Login
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                         <div className="footer-section">
