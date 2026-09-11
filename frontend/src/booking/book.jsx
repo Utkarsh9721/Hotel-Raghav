@@ -13,11 +13,9 @@ const BookingPage = () => {
     const [formErrors, setFormErrors] = useState({});
     const [progress, setProgress] = useState(25);
 
-    // Get backend URL from environment
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const FRONTEND_URL = import.meta.env.VITE_APP_URL || 'https://hotel-raghav.vercel.app';
 
-    // Form state
     const [formData, setFormData] = useState({
         roomType: 'standard',
         guests: 1,
@@ -30,7 +28,6 @@ const BookingPage = () => {
         specialRequests: ''
     });
 
-    // Room prices (INR)
     const roomPrices = {
         standard: 800,
         deluxe: 1000,
@@ -43,14 +40,12 @@ const BookingPage = () => {
         suite: 'Executive Suite'
     };
 
-    // Booking summary
     const [totalPrice, setTotalPrice] = useState(0);
     const [nights, setNights] = useState(0);
     const [bookingSuccess, setBookingSuccess] = useState(false);
     const [bookingReference, setBookingReference] = useState('');
     const [currentYear] = useState(new Date().getFullYear());
 
-    // Get today's date for min date
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
@@ -59,7 +54,6 @@ const BookingPage = () => {
         const checkAuthAndRedirect = async () => {
             const token = localStorage.getItem('token');
             let isAuth = false;
-            let userData = null;
 
             if (token) {
                 try {
@@ -72,7 +66,6 @@ const BookingPage = () => {
                     const data = await response.json();
                     if (data.isAuthenticated) {
                         isAuth = true;
-                        userData = data.user;
                         setIsAuthenticated(true);
                         setUser(data.user);
                         setFormData(prev => ({
@@ -132,12 +125,12 @@ const BookingPage = () => {
         calculateTotal();
     }, [formData.checkIn, formData.checkOut, formData.roomType, formData.guests]);
 
-    // ─── UPDATE PROGRESS ────────────────────────────
+    // ─── UPDATE PROGRESS (last name no longer required) ────
     useEffect(() => {
         let prog = 0;
         if (formData.roomType) prog += 20;
         if (formData.checkIn && formData.checkOut) prog += 25;
-        if (formData.firstName && formData.lastName) prog += 20;
+        if (formData.firstName) prog += 20;  // ✅ Only first name required
         if (formData.email && formData.phone) prog += 20;
         if (formData.specialRequests) prog += 15;
         setProgress(Math.min(prog, 100));
@@ -173,15 +166,15 @@ const BookingPage = () => {
         }
     };
 
+    // ─── VALIDATION (last name removed) ─────────────
     const validateForm = () => {
         const errors = {};
 
         if (!formData.firstName.trim()) {
             errors.firstName = 'First name is required';
         }
-        if (!formData.lastName.trim()) {
-            errors.lastName = 'Last name is required';
-        }
+        // ✅ Last name is now OPTIONAL - validation removed
+
         if (!formData.email.trim()) {
             errors.email = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -212,7 +205,6 @@ const BookingPage = () => {
 
     // ─── HANDLE GOOGLE LOGIN ────────────────────────
     const handleGoogleLogin = () => {
-        // Store current booking data before redirect
         localStorage.setItem('bookingData', JSON.stringify({
             roomType: formData.roomType,
             guests: formData.guests,
@@ -255,7 +247,7 @@ const BookingPage = () => {
                 totalPrice: totalPrice,
                 nights: nights,
                 firstName: formData.firstName.trim(),
-                lastName: formData.lastName.trim() || 'Unknown',
+                lastName: formData.lastName.trim() || '',  // ✅ Empty string instead of 'Unknown'
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
                 specialRequests: formData.specialRequests || 'None',
@@ -304,7 +296,6 @@ const BookingPage = () => {
         return roomLabels[type] || type;
     };
 
-    // ─── LOADING STATE ──────────────────────────────
     if (!authChecked) {
         return (
             <div className="loading-screen">
@@ -386,7 +377,7 @@ const BookingPage = () => {
 
                             {!bookingSuccess && (
                                 <form onSubmit={handleSubmit} className="booking-form" noValidate>
-                                    {/* ─── ROOM SELECTION ──────────────────── */}
+                                    {/* Room Selection */}
                                     <div className="form-section">
                                         <h3>🏠 Room Selection</h3>
                                         <div className="form-row">
@@ -422,7 +413,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* ─── DATE SELECTION ──────────────────── */}
+                                    {/* Date Selection */}
                                     <div className="form-section">
                                         <h3>📅 Select Dates</h3>
                                         <div className="form-row">
@@ -461,7 +452,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* ─── PERSONAL INFO ───────────────────── */}
+                                    {/* Personal Information */}
                                     <div className="form-section">
                                         <h3>👤 Personal Information</h3>
                                         {!isAuthenticated && (
@@ -484,7 +475,7 @@ const BookingPage = () => {
                                         )}
                                         <div className="form-row">
                                             <div className="form-group">
-                                                <label htmlFor="firstName">First Name</label>
+                                                <label htmlFor="firstName">First Name <span className="required">*</span></label>
                                                 <input
                                                     type="text"
                                                     id="firstName"
@@ -501,26 +492,23 @@ const BookingPage = () => {
                                                 )}
                                             </div>
                                             <div className="form-group">
-                                                <label htmlFor="lastName">Last Name</label>
+                                                {/* ✅ Last name marked as optional */}
+                                                <label htmlFor="lastName">Last Name <span className="optional">(Optional)</span></label>
                                                 <input
                                                     type="text"
                                                     id="lastName"
                                                     name="lastName"
-                                                    placeholder="Your last name"
+                                                    placeholder="Your last name (optional)"
                                                     value={formData.lastName}
                                                     onChange={handleChange}
-                                                    required
                                                     readOnly={isAuthenticated}
-                                                    className={`${isAuthenticated ? 'auto-filled' : ''} ${formErrors.lastName ? 'error' : ''}`}
+                                                    className={`${isAuthenticated ? 'auto-filled' : ''}`}
                                                 />
-                                                {formErrors.lastName && (
-                                                    <span className="error-message">{formErrors.lastName}</span>
-                                                )}
                                             </div>
                                         </div>
                                         <div className="form-row">
                                             <div className="form-group">
-                                                <label htmlFor="email">Email Address</label>
+                                                <label htmlFor="email">Email Address <span className="required">*</span></label>
                                                 <input
                                                     type="email"
                                                     id="email"
@@ -537,7 +525,7 @@ const BookingPage = () => {
                                                 )}
                                             </div>
                                             <div className="form-group">
-                                                <label htmlFor="phone">Phone Number</label>
+                                                <label htmlFor="phone">Phone Number <span className="required">*</span></label>
                                                 <input
                                                     type="tel"
                                                     id="phone"
@@ -555,7 +543,7 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* ─── SPECIAL REQUESTS ────────────────── */}
+                                    {/* Special Requests */}
                                     <div className="form-section">
                                         <h3>💬 Special Requests</h3>
                                         <div className="form-group">
@@ -571,12 +559,10 @@ const BookingPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* ─── BOOKING NOTE ────────────────────── */}
                                     <div className="booking-note">
                                         <p>📋 <strong>Note:</strong> Our team will contact you within 24 hours to confirm your booking. No payment is required at this time.</p>
                                     </div>
 
-                                    {/* ─── SUBMIT ───────────────────────────── */}
                                     <button
                                         type="submit"
                                         className={`btn-book-now ${isLoading ? 'loading' : ''}`}
@@ -592,7 +578,6 @@ const BookingPage = () => {
                                         )}
                                     </button>
 
-                                    {/* ─── GUEST TIP ───────────────────────── */}
                                     {!isAuthenticated && (
                                         <div className="guest-booking-note">
                                             <p>💡 <strong>Tip:</strong>
@@ -610,7 +595,7 @@ const BookingPage = () => {
                             )}
                         </div>
 
-                        {/* ─── BOOKING SUMMARY ───────────────────── */}
+                        {/* Booking Summary */}
                         <div className="booking-summary">
                             <h3>📋 Booking Summary</h3>
                             <div className="summary-details">
@@ -677,7 +662,7 @@ const BookingPage = () => {
                 </div>
             </section>
 
-            {/* ─── FOOTER ────────────────────────────── */}
+            {/* Footer */}
             <footer className="booking-footer">
                 <div className="container">
                     <div className="footer-content">
