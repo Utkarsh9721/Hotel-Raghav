@@ -3,12 +3,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Home from "../assets/home.jpg";
 import HotelExterior from "../assets/hotel3.jpeg";
-import RoomInterior from "../assets/hotel5.jpeg";
+import RoomInterior from "../assets/room4.jpeg";
 import Restaurant from "../assets/food.jpg";
 import Lobby from "../assets/hotel4.jpeg";
 import EventHall from "../assets/hotel7.jpg";
 import GardenArea from "../assets/hotel8.jpg";
-import Room from "../assets/room.jpeg";
+import Room from "../assets/room5.jpeg";
 import Room2 from "../assets/room2.jpeg";
 import "./HotelLanding.css";
 
