@@ -1,7 +1,5 @@
 // src/home/home.jsx
-import React, {
-    useState, useEffect, useRef, useCallback, useMemo
-} from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import Home from "../assets/home.jpg";
@@ -19,7 +17,6 @@ import "./HotelLanding.css";
    INLINE HOOKS
    ════════════════════════════════════════════════════════════ */
 
-/* ─── 3D tilt + cursor shine (auto-settle, GPU-cheap) ─────── */
 const use3DTilt = (max = 9, withShine = true) => {
     const ref = useRef(null);
     const raf = useRef(null);
@@ -36,18 +33,15 @@ const use3DTilt = (max = 9, withShine = true) => {
         c.mx += (t.mx - c.mx) * k;
         c.my += (t.my - c.my) * k;
         c.scale += (t.scale - c.scale) * k;
-
         el.style.setProperty("--rx", `${c.rx.toFixed(2)}deg`);
         el.style.setProperty("--ry", `${c.ry.toFixed(2)}deg`);
         el.style.setProperty("--mx", `${c.mx.toFixed(1)}%`);
         el.style.setProperty("--my", `${c.my.toFixed(1)}%`);
         el.style.setProperty("--scale", c.scale.toFixed(3));
-
         const settled =
             Math.abs(t.rx - c.rx) < 0.02 &&
             Math.abs(t.ry - c.ry) < 0.02 &&
             Math.abs(t.scale - c.scale) < 0.002;
-
         raf.current = settled ? null : requestAnimationFrame(loop);
     }, []);
 
@@ -78,7 +72,6 @@ const use3DTilt = (max = 9, withShine = true) => {
     return { ref, onMouseMove, onMouseLeave };
 };
 
-/* ─── Magnetic cursor pull (with falloff) ─────────────────── */
 const useMagnetic = (strength = 0.28, radius = 85) => {
     const ref = useRef(null);
     const raf = useRef(null);
@@ -135,7 +128,6 @@ const useMagnetic = (strength = 0.28, radius = 85) => {
     return ref;
 };
 
-/* ─── Scroll reveal fallback ──────────────────────────────── */
 const useReveal = () => {
     useEffect(() => {
         if (typeof CSS !== "undefined" && CSS.supports?.("animation-timeline: view()")) return;
@@ -153,7 +145,6 @@ const useReveal = () => {
     }, []);
 };
 
-/* ─── Animated counter ────────────────────────────────────── */
 const useCounter = (end, duration = 1800, start = true) => {
     const [value, setValue] = useState(0);
     useEffect(() => {
@@ -171,7 +162,6 @@ const useCounter = (end, duration = 1800, start = true) => {
     return value;
 };
 
-/* ─── Active section scroll spy ───────────────────────────── */
 const useActiveSection = (ids) => {
     const [active, setActive] = useState(ids[0]);
     useEffect(() => {
@@ -190,7 +180,6 @@ const useActiveSection = (ids) => {
     return active;
 };
 
-/* ─── Scroll position + progress ──────────────────────────── */
 const useScrolled = (threshold = 24) => {
     const [scrolled, setScrolled] = useState(false);
     const [pct, setPct] = useState(0);
@@ -213,24 +202,20 @@ const useScrolled = (threshold = 24) => {
     return { scrolled, pct };
 };
 
-/* ─── Body scroll lock (with scrollbar compensation) ─────── */
 const useBodyLock = (locked) => {
     useEffect(() => {
         const html = document.documentElement;
         const body = document.body;
-
         if (!locked) {
             html.classList.remove("nav-locked");
             body.classList.remove("nav-locked");
             body.style.removeProperty("padding-right");
             return;
         }
-
         const sbw = window.innerWidth - html.clientWidth;
         html.classList.add("nav-locked");
         body.classList.add("nav-locked");
         if (sbw > 0) body.style.paddingRight = `${sbw}px`;
-
         return () => {
             html.classList.remove("nav-locked");
             body.classList.remove("nav-locked");
@@ -242,6 +227,7 @@ const useBodyLock = (locked) => {
 /* ════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════ */
+
 const HotelLanding = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentYear] = useState(new Date().getFullYear());
@@ -492,7 +478,7 @@ const HotelLanding = () => {
                         </span>
                     </button>
 
-                    {/* Desktop links only */}
+                    {/* Desktop links */}
                     <ul className="nav-links-desktop">
                         {navLinks.map((l) => (
                             <li key={l.id}>
@@ -505,8 +491,18 @@ const HotelLanding = () => {
                                 </a>
                             </li>
                         ))}
+                        <li>
+                            <a
+                                href="/admin/login"
+                                className="admin-link"
+                                onClick={(e) => { e.preventDefault(); handleAdminLogin(); }}
+                            >
+                                🔐 Admin
+                            </a>
+                        </li>
                     </ul>
 
+                    {/* Nav CTA — admin button always visible */}
                     <div className="nav-cta">
                         {isAuthenticated ? (
                             <div className="user-menu">
@@ -524,11 +520,19 @@ const HotelLanding = () => {
                                     </svg>
                                     <span>Logout</span>
                                 </button>
+                                <button className="btn-admin-nav" onClick={handleAdminLogin} title="Admin Login" aria-label="Admin Login">
+                                    🔐
+                                </button>
                             </div>
                         ) : (
-                            <MagneticButton className="btn-book-now" onClick={() => handleBookNow()}>
-                                Book Now
-                            </MagneticButton>
+                            <>
+                                <MagneticButton className="btn-book-now" onClick={() => handleBookNow()}>
+                                    Book Now
+                                </MagneticButton>
+                                <button className="btn-admin-nav" onClick={handleAdminLogin} title="Admin Login" aria-label="Admin Login">
+                                    🔐
+                                </button>
+                            </>
                         )}
                     </div>
 
@@ -547,7 +551,7 @@ const HotelLanding = () => {
                 </div>
             </nav>
 
-            {/* ─── MOBILE DRAWER (Portal on body) ──────────── */}
+            {/* ─── MOBILE DRAWER (Portal) ───────────────────── */}
             {typeof document !== "undefined" && createPortal(
                 <div
                     id="mobile-drawer"
@@ -588,6 +592,20 @@ const HotelLanding = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* Quick admin card — top of drawer */}
+                        <button
+                            type="button"
+                            className="mobile-drawer__quick-btn"
+                            onClick={handleAdminLogin}
+                        >
+                            <span className="quick-icon">🔐</span>
+                            <span className="quick-text">
+                                <strong>Admin Login</strong>
+                                <span>Manage bookings &amp; rooms</span>
+                            </span>
+                            <span className="quick-arrow" aria-hidden="true">→</span>
+                        </button>
 
                         <ul className="mobile-drawer__links">
                             {navLinks.map((l, i) => (
@@ -917,7 +935,11 @@ const HotelLanding = () => {
                                         <a href={`#${l.id}`} onClick={(e) => { e.preventDefault(); scrollToSection(l.id); }}>{l.label}</a>
                                     </li>
                                 ))}
-                                <li><a href="/admin/login" onClick={(e) => { e.preventDefault(); handleAdminLogin(); }}>Admin Login</a></li>
+                                <li>
+                                    <a href="/admin/login" onClick={(e) => { e.preventDefault(); handleAdminLogin(); }}>
+                                        🔐 Admin Login
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                         <div className="footer-section">
