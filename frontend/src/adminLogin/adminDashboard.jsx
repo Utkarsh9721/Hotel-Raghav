@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({
         totalBookings: 0,
         pendingBookings: 0,
@@ -34,6 +35,7 @@ const AdminDashboard = () => {
         contactCustomer: true
     });
     const [showStatusModal, setShowStatusModal] = useState(false);
+    const [closingModal, setClosingModal] = useState(null); // 'contact' | 'status' | null
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -51,11 +53,12 @@ const AdminDashboard = () => {
         fetchDashboardData();
 
         // Auto-refresh every 30 seconds
-        const interval = setInterval(fetchDashboardData, 30000);
+        const interval = setInterval(() => fetchDashboardData(true), 30000);
         return () => clearInterval(interval);
     }, [currentPage, filterStatus, searchTerm]);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async (silent = false) => {
+        if (silent) setRefreshing(true);
         try {
             const token = localStorage.getItem('adminToken');
 
@@ -94,6 +97,7 @@ const AdminDashboard = () => {
             console.error('Error fetching dashboard data:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -101,6 +105,15 @@ const AdminDashboard = () => {
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminUser');
         navigate('/admin/login');
+    };
+
+    const closeModal = (which) => {
+        setClosingModal(which);
+        setTimeout(() => {
+            if (which === 'contact') setShowContactModal(false);
+            if (which === 'status') setShowStatusModal(false);
+            setClosingModal(null);
+        }, 180);
     };
 
     const handleStatusUpdate = async (bookingId) => {
@@ -124,7 +137,7 @@ const AdminDashboard = () => {
 
             if (data.success) {
                 alert('✅ Booking status updated successfully!');
-                setShowStatusModal(false);
+                closeModal('status');
                 fetchDashboardData();
             } else {
                 alert('❌ Failed to update status: ' + data.message);
@@ -152,7 +165,7 @@ const AdminDashboard = () => {
 
             if (data.success) {
                 alert('✅ Contact history added successfully!');
-                setShowContactModal(false);
+                closeModal('contact');
                 setContactData({
                     contactMethod: 'phone',
                     notes: '',
@@ -211,7 +224,41 @@ const AdminDashboard = () => {
         return (
             <div className="admin-loading">
                 <div className="admin-loader"></div>
-                <p>Loading dashboard...</p>
+                <p>Loading dashboard…</p>
+                <style>{`
+                    .admin-loading {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        background:
+                            radial-gradient(ellipse 900px 500px at 10% -10%, rgba(169, 121, 31, 0.06), transparent),
+                            #F8F6F1;
+                        gap: 4px;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                    }
+                    .admin-loading p {
+                        color: #64748B;
+                        font-size: 14px;
+                        letter-spacing: 0.02em;
+                        animation: pulseFade 1.4s ease-in-out infinite;
+                    }
+                    .admin-loader {
+                        width: 42px;
+                        height: 42px;
+                        border: 3px solid #E7E2D6;
+                        border-top: 3px solid #A9791F;
+                        border-radius: 50%;
+                        animation: spin 0.85s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+                        margin-bottom: 18px;
+                    }
+                    @keyframes spin { to { transform: rotate(360deg); } }
+                    @keyframes pulseFade {
+                        0%, 100% { opacity: 0.5; }
+                        50% { opacity: 1; }
+                    }
+                `}</style>
             </div>
         );
     }
@@ -239,42 +286,42 @@ const AdminDashboard = () => {
             <div className="admin-dashboard-content">
                 {/* Stats Grid */}
                 <div className="admin-stats-grid">
-                    <div className="stat-card total">
+                    <div className="stat-card total" style={{ animationDelay: '0ms' }}>
                         <div className="stat-icon">📊</div>
                         <div className="stat-info">
                             <h3>{stats.totalBookings}</h3>
                             <p>Total Bookings</p>
                         </div>
                     </div>
-                    <div className="stat-card pending">
+                    <div className="stat-card pending" style={{ animationDelay: '60ms' }}>
                         <div className="stat-icon">⏳</div>
                         <div className="stat-info">
                             <h3>{stats.pendingBookings}</h3>
                             <p>Pending</p>
                         </div>
                     </div>
-                    <div className="stat-card confirmed">
+                    <div className="stat-card confirmed" style={{ animationDelay: '120ms' }}>
                         <div className="stat-icon">✅</div>
                         <div className="stat-info">
                             <h3>{stats.confirmedBookings}</h3>
                             <p>Confirmed</p>
                         </div>
                     </div>
-                    <div className="stat-card today">
+                    <div className="stat-card today" style={{ animationDelay: '180ms' }}>
                         <div className="stat-icon">📅</div>
                         <div className="stat-info">
                             <h3>{stats.todayBookings || 0}</h3>
                             <p>Today's Bookings</p>
                         </div>
                     </div>
-                    <div className="stat-card revenue">
+                    <div className="stat-card revenue" style={{ animationDelay: '240ms' }}>
                         <div className="stat-icon">💰</div>
                         <div className="stat-info">
                             <h3>${stats.totalRevenue || 0}</h3>
                             <p>Revenue</p>
                         </div>
                     </div>
-                    <div className="stat-card upcoming">
+                    <div className="stat-card upcoming" style={{ animationDelay: '300ms' }}>
                         <div className="stat-icon">🚀</div>
                         <div className="stat-info">
                             <h3>{stats.upcomingBookings || 0}</h3>
@@ -308,8 +355,12 @@ const AdminDashboard = () => {
                             className="search-input"
                         />
                     </div>
-                    <button className="btn-refresh" onClick={fetchDashboardData}>
-                        🔄 Refresh
+                    <button
+                        className={`btn-refresh ${refreshing ? 'is-refreshing' : ''}`}
+                        onClick={() => fetchDashboardData(true)}
+                        disabled={refreshing}
+                    >
+                        <span className="refresh-icon">🔄</span> Refresh
                     </button>
                 </div>
 
@@ -317,7 +368,10 @@ const AdminDashboard = () => {
                 <div className="admin-recent-bookings">
                     <h2>📋 Bookings</h2>
                     {recentBookings.length === 0 ? (
-                        <p className="no-bookings">No bookings found</p>
+                        <div className="no-bookings">
+                            <span className="no-bookings-icon">🗒️</span>
+                            <p>No bookings found</p>
+                        </div>
                     ) : (
                         <div className="bookings-table-container">
                             <table className="bookings-table">
@@ -335,8 +389,12 @@ const AdminDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {recentBookings.map(booking => (
-                                        <tr key={booking._id} className="booking-row">
+                                    {recentBookings.map((booking, idx) => (
+                                        <tr
+                                            key={booking._id}
+                                            className="booking-row"
+                                            style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
+                                        >
                                             <td>
                                                 <strong>{booking.bookingReference}</strong>
                                                 <div className="booking-date">
@@ -409,14 +467,14 @@ const AdminDashboard = () => {
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
                             >
-                                Previous
+                                ← Previous
                             </button>
                             <span>Page {currentPage} of {totalPages}</span>
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
                             >
-                                Next
+                                Next →
                             </button>
                         </div>
                     )}
@@ -425,8 +483,14 @@ const AdminDashboard = () => {
 
             {/* Contact Modal */}
             {showContactModal && selectedBooking && (
-                <div className="modal-overlay" onClick={() => setShowContactModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className={`modal-overlay ${closingModal === 'contact' ? 'is-closing' : ''}`}
+                    onClick={() => closeModal('contact')}
+                >
+                    <div
+                        className={`modal-content ${closingModal === 'contact' ? 'is-closing' : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <h2>📞 Contact Guest</h2>
                         <div className="contact-info-display">
                             <p><strong>Guest:</strong> {selectedBooking.guestDetails.firstName} {selectedBooking.guestDetails.lastName}</p>
@@ -478,7 +542,7 @@ const AdminDashboard = () => {
                             </button>
                             <button
                                 className="btn-cancel"
-                                onClick={() => setShowContactModal(false)}
+                                onClick={() => closeModal('contact')}
                             >
                                 Cancel
                             </button>
@@ -489,8 +553,14 @@ const AdminDashboard = () => {
 
             {/* Status Update Modal */}
             {showStatusModal && selectedBooking && (
-                <div className="modal-overlay" onClick={() => setShowStatusModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className={`modal-overlay ${closingModal === 'status' ? 'is-closing' : ''}`}
+                    onClick={() => closeModal('status')}
+                >
+                    <div
+                        className={`modal-content ${closingModal === 'status' ? 'is-closing' : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <h2>📋 Update Booking Status</h2>
                         <div className="contact-info-display">
                             <p><strong>Booking:</strong> {selectedBooking.bookingReference}</p>
@@ -529,7 +599,7 @@ const AdminDashboard = () => {
                             </button>
                             <button
                                 className="btn-cancel"
-                                onClick={() => setShowStatusModal(false)}
+                                onClick={() => closeModal('status')}
                             >
                                 Cancel
                             </button>
@@ -562,6 +632,8 @@ const AdminDashboard = () => {
                     --shadow-sm: 0 1px 2px rgba(20, 33, 61, 0.06), 0 1px 3px rgba(20, 33, 61, 0.08);
                     --shadow-md: 0 4px 16px rgba(20, 33, 61, 0.08), 0 2px 6px rgba(20, 33, 61, 0.06);
                     --shadow-lg: 0 12px 32px rgba(20, 33, 61, 0.14);
+                    --shadow-xl: 0 24px 64px rgba(20, 33, 61, 0.22);
+                    --ease: cubic-bezier(0.22, 1, 0.36, 1);
                     --radius: 10px;
                 }
 
@@ -573,40 +645,11 @@ const AdminDashboard = () => {
                     min-height: 100vh;
                     background:
                         radial-gradient(ellipse 900px 500px at 10% -10%, rgba(169, 121, 31, 0.06), transparent),
+                        radial-gradient(ellipse 700px 400px at 100% 0%, rgba(63, 107, 76, 0.045), transparent),
                         var(--parchment);
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     color: var(--ink);
                     -webkit-font-smoothing: antialiased;
-                }
-
-                .admin-loading {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100vh;
-                    background: var(--parchment);
-                    gap: 4px;
-                }
-
-                .admin-loading p {
-                    color: var(--slate);
-                    font-size: 14px;
-                    letter-spacing: 0.02em;
-                }
-
-                .admin-loader {
-                    width: 42px;
-                    height: 42px;
-                    border: 3px solid var(--line);
-                    border-top: 3px solid var(--brass);
-                    border-radius: 50%;
-                    animation: spin 0.85s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
-                    margin-bottom: 18px;
-                }
-
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
                 }
 
                 /* Navigation */
@@ -619,6 +662,11 @@ const AdminDashboard = () => {
                     top: 0;
                     z-index: 100;
                     border-bottom: 2px solid var(--brass);
+                    animation: navSlideDown 480ms var(--ease) both;
+                }
+                @keyframes navSlideDown {
+                    from { transform: translateY(-100%); }
+                    to   { transform: translateY(0); }
                 }
 
                 .admin-nav-container {
@@ -654,6 +702,11 @@ const AdminDashboard = () => {
                     font-weight: 600;
                     letter-spacing: 0.08em;
                     text-transform: uppercase;
+                    animation: badgeGlow 3.2s ease-in-out infinite;
+                }
+                @keyframes badgeGlow {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(200, 155, 60, 0); }
+                    50%      { box-shadow: 0 0 0 4px rgba(200, 155, 60, 0.1); }
                 }
 
                 .admin-nav-right {
@@ -676,13 +729,17 @@ const AdminDashboard = () => {
                     cursor: pointer;
                     font-weight: 600;
                     font-size: 13px;
-                    transition: all 0.2s ease;
+                    transition: all 0.2s var(--ease);
                 }
 
                 .admin-logout-btn:hover {
                     background: var(--wine);
                     border-color: var(--wine);
                     transform: translateY(-1px);
+                    box-shadow: 0 6px 16px -6px rgba(122, 46, 46, 0.6);
+                }
+                .admin-logout-btn:active {
+                    transform: translateY(0) scale(0.97);
                 }
 
                 .admin-dashboard-content {
@@ -709,9 +766,15 @@ const AdminDashboard = () => {
                     gap: 16px;
                     border: 1px solid var(--line);
                     border-top: 3px solid var(--accent, var(--brass));
-                    transition: transform 0.22s ease, box-shadow 0.22s ease;
+                    transition: transform 0.26s var(--ease), box-shadow 0.26s var(--ease), border-color 0.26s var(--ease);
                     position: relative;
                     overflow: hidden;
+                    opacity: 0;
+                    animation: statCardIn 520ms var(--ease) both;
+                }
+                @keyframes statCardIn {
+                    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
                 }
 
                 .stat-card::after {
@@ -722,8 +785,19 @@ const AdminDashboard = () => {
                     pointer-events: none;
                 }
 
+                .stat-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: radial-gradient(160px circle at 20% 0%, var(--tint, transparent), transparent 70%);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    pointer-events: none;
+                }
+                .stat-card:hover::before { opacity: 0.6; }
+
                 .stat-card:hover {
-                    transform: translateY(-3px);
+                    transform: translateY(-4px);
                     box-shadow: var(--shadow-md);
                 }
 
@@ -737,6 +811,10 @@ const AdminDashboard = () => {
                     border-radius: 9px;
                     background: var(--tint, var(--amber-light));
                     flex-shrink: 0;
+                    transition: transform 0.32s var(--ease);
+                }
+                .stat-card:hover .stat-icon {
+                    transform: scale(1.08) rotate(-4deg);
                 }
 
                 .stat-info h3 {
@@ -746,6 +824,7 @@ const AdminDashboard = () => {
                     margin: 0;
                     color: var(--ink);
                     line-height: 1;
+                    font-variant-numeric: tabular-nums;
                 }
 
                 .stat-info p {
@@ -776,6 +855,11 @@ const AdminDashboard = () => {
                     border: 1px solid var(--line);
                     flex-wrap: wrap;
                     gap: 12px;
+                    animation: fadeSlideIn 480ms var(--ease) 120ms both;
+                }
+                @keyframes fadeSlideIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to   { opacity: 1; transform: translateY(0); }
                 }
 
                 .filter-section {
@@ -793,7 +877,12 @@ const AdminDashboard = () => {
                     font-family: inherit;
                     color: var(--ink);
                     background: var(--parchment);
-                    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+                    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+                }
+
+                .filter-select:hover,
+                .search-input:hover {
+                    border-color: #C7C1B0;
                 }
 
                 .filter-select:focus,
@@ -817,14 +906,33 @@ const AdminDashboard = () => {
                     cursor: pointer;
                     font-weight: 600;
                     font-size: 13px;
-                    transition: all 0.2s ease;
+                    transition: all 0.22s var(--ease);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
                 }
 
-                .btn-refresh:hover {
+                .btn-refresh:hover:not(:disabled) {
                     background: var(--ink-soft);
                     transform: translateY(-1px);
                     box-shadow: var(--shadow-sm);
                 }
+                .btn-refresh:active:not(:disabled) {
+                    transform: translateY(0) scale(0.98);
+                }
+                .btn-refresh:disabled {
+                    opacity: 0.85;
+                    cursor: default;
+                }
+
+                .refresh-icon {
+                    display: inline-block;
+                    transition: transform 0.3s ease;
+                }
+                .btn-refresh.is-refreshing .refresh-icon {
+                    animation: spin 0.8s linear infinite;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
 
                 /* Bookings Table */
                 .admin-recent-bookings {
@@ -833,6 +941,7 @@ const AdminDashboard = () => {
                     padding: 26px;
                     box-shadow: var(--shadow-sm);
                     border: 1px solid var(--line);
+                    animation: fadeSlideIn 480ms var(--ease) 200ms both;
                 }
 
                 .admin-recent-bookings h2 {
@@ -848,8 +957,16 @@ const AdminDashboard = () => {
                 .no-bookings {
                     text-align: center;
                     color: var(--slate);
-                    padding: 50px 0;
+                    padding: 60px 0;
                     font-size: 14px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .no-bookings-icon {
+                    font-size: 32px;
+                    opacity: 0.6;
                 }
 
                 .bookings-table-container {
@@ -873,6 +990,8 @@ const AdminDashboard = () => {
                     color: var(--slate);
                     border-bottom: 2px solid var(--line);
                     white-space: nowrap;
+                    position: sticky;
+                    top: 0;
                 }
 
                 .bookings-table td {
@@ -883,11 +1002,17 @@ const AdminDashboard = () => {
                 }
 
                 .booking-row {
+                    opacity: 0;
+                    animation: rowFadeIn 380ms var(--ease) both;
                     transition: background 0.15s ease;
+                }
+                @keyframes rowFadeIn {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to   { opacity: 1; transform: translateY(0); }
                 }
 
                 .booking-row:hover {
-                    background: rgba(169, 121, 31, 0.045);
+                    background: rgba(169, 121, 31, 0.05);
                 }
 
                 .booking-row strong {
@@ -942,6 +1067,10 @@ const AdminDashboard = () => {
                     display: inline-block;
                     white-space: nowrap;
                     letter-spacing: 0.01em;
+                    transition: transform 0.18s var(--ease);
+                }
+                .booking-row:hover .status-badge {
+                    transform: scale(1.03);
                 }
 
                 .badge-warning { background: var(--amber-light); color: var(--amber); }
@@ -964,15 +1093,18 @@ const AdminDashboard = () => {
                     border-radius: 6px;
                     font-size: 11px;
                     cursor: pointer;
-                    transition: all 0.18s ease;
+                    transition: all 0.18s var(--ease);
                     font-weight: 600;
                     text-transform: capitalize;
                     letter-spacing: 0.01em;
                 }
 
                 .btn-action:hover {
-                    transform: translateY(-1px);
+                    transform: translateY(-2px);
                     box-shadow: var(--shadow-sm);
+                }
+                .btn-action:active {
+                    transform: translateY(0) scale(0.96);
                 }
 
                 .btn-confirmed { background: var(--sage); color: white; }
@@ -993,13 +1125,16 @@ const AdminDashboard = () => {
                     border: none;
                     border-radius: 6px;
                     cursor: pointer;
-                    transition: all 0.18s ease;
+                    transition: all 0.18s var(--ease);
                 }
 
                 .btn-contact:hover {
                     background: #8C6419;
-                    transform: translateY(-1px);
+                    transform: translateY(-2px) rotate(-4deg);
                     box-shadow: var(--shadow-sm);
+                }
+                .btn-contact:active {
+                    transform: translateY(0) scale(0.96);
                 }
 
                 .pagination {
@@ -1021,13 +1156,14 @@ const AdminDashboard = () => {
                     font-size: 13px;
                     font-weight: 500;
                     color: var(--ink-soft);
-                    transition: all 0.2s ease;
+                    transition: all 0.2s var(--ease);
                 }
 
                 .pagination button:hover:not(:disabled) {
                     background: var(--ink);
                     color: #F4F1E8;
                     border-color: var(--ink);
+                    transform: translateY(-1px);
                 }
 
                 .pagination button:disabled {
@@ -1038,6 +1174,7 @@ const AdminDashboard = () => {
                 .pagination span {
                     color: var(--slate);
                     font-size: 13px;
+                    font-variant-numeric: tabular-nums;
                 }
 
                 /* Modal Styles */
@@ -1048,18 +1185,25 @@ const AdminDashboard = () => {
                     right: 0;
                     bottom: 0;
                     background: rgba(20, 33, 61, 0.55);
-                    backdrop-filter: blur(2px);
+                    backdrop-filter: blur(3px);
+                    -webkit-backdrop-filter: blur(3px);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 1000;
                     padding: 20px;
-                    animation: fadeIn 0.18s ease;
+                    animation: overlayFadeIn 220ms ease both;
                 }
-
-                @keyframes fadeIn {
+                .modal-overlay.is-closing {
+                    animation: overlayFadeOut 180ms ease both;
+                }
+                @keyframes overlayFadeIn {
                     from { opacity: 0; }
-                    to { opacity: 1; }
+                    to   { opacity: 1; }
+                }
+                @keyframes overlayFadeOut {
+                    from { opacity: 1; }
+                    to   { opacity: 0; }
                 }
 
                 .modal-content {
@@ -1070,14 +1214,20 @@ const AdminDashboard = () => {
                     width: 100%;
                     max-height: 90vh;
                     overflow-y: auto;
-                    box-shadow: var(--shadow-lg);
+                    box-shadow: var(--shadow-xl);
                     border-top: 3px solid var(--brass);
-                    animation: slideUp 0.2s ease;
+                    animation: modalSlideUp 260ms var(--ease) both;
                 }
-
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translateY(12px); }
-                    to { opacity: 1; transform: translateY(0); }
+                .modal-content.is-closing {
+                    animation: modalSlideDown 180ms ease both;
+                }
+                @keyframes modalSlideUp {
+                    from { opacity: 0; transform: translateY(18px) scale(0.98); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes modalSlideDown {
+                    from { opacity: 1; transform: translateY(0) scale(1); }
+                    to   { opacity: 0; transform: translateY(10px) scale(0.98); }
                 }
 
                 .modal-content h2 {
@@ -1124,7 +1274,13 @@ const AdminDashboard = () => {
                     font-size: 13.5px;
                     font-family: inherit;
                     color: var(--ink);
-                    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+                    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+                }
+
+                .form-group select:hover,
+                .form-group textarea:hover,
+                .form-group input[type="text"]:hover {
+                    border-color: #C7C1B0;
                 }
 
                 .form-group select:focus,
@@ -1165,12 +1321,16 @@ const AdminDashboard = () => {
                     cursor: pointer;
                     font-weight: 600;
                     font-size: 13.5px;
-                    transition: all 0.2s ease;
+                    transition: all 0.2s var(--ease);
                 }
 
                 .btn-submit:hover {
                     background: var(--ink-soft);
                     transform: translateY(-1px);
+                    box-shadow: var(--shadow-md);
+                }
+                .btn-submit:active {
+                    transform: translateY(0) scale(0.98);
                 }
 
                 .btn-cancel {
@@ -1182,12 +1342,15 @@ const AdminDashboard = () => {
                     cursor: pointer;
                     font-weight: 600;
                     font-size: 13.5px;
-                    transition: all 0.2s ease;
+                    transition: all 0.2s var(--ease);
                 }
 
                 .btn-cancel:hover {
                     background: var(--parchment);
                     border-color: #C7C1B0;
+                }
+                .btn-cancel:active {
+                    transform: scale(0.98);
                 }
 
                 /* Responsive */
